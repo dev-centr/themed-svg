@@ -1,0 +1,19 @@
+= Initial semantic theming standard
+:page-audience: SVG tooling authors and web platform integrators
+:page-usage-context: release detail
+:page-orig-author: Auto on behalf of Ryan Johnson
+:page-last-author: Auto on behalf of Ryan Johnson
+
+The initial release separates semantic SVG theming from any one diagram
+generator. Producers describe semantic roles and explicit structural targets in
+a version 1 manifest. Consumers can then generate standalone adaptive, host
+controlled, fixed, or paired fixed SVG output.
+
+The transformer parses XML and CSS structurally, rejects active or external
+content, and never relies on global literal-color replacement. Bundled defaults,
+manifest presets, manifest mode overrides, runtime shared values, and runtime
+mode-specific values merge in a documented order.
+
+Geometry is intentionally strict. Existing view boxes are preserved. A missing
+view box is derived only from positive numeric width and height, and otherwise
+the transform fails without output.

@@ -1,0 +1,259 @@
+ifndef::env-github[]
+= Themed SVG
+endif::[]
+:toc:
+:toclevels: 2
+
+ifdef::env-github[]
+++++
+<div align="center">
+  <p>
+    <a href="https://github.com/dev-centr/themed-svg/graphs/contributors"><img src="https://img.shields.io/github/contributors/dev-centr/themed-svg.svg?style=for-the-badge" alt="Contributors"></a>
+    <a href="https://github.com/dev-centr/themed-svg/network/members"><img src="https://img.shields.io/github/forks/dev-centr/themed-svg.svg?style=for-the-badge" alt="Forks"></a>
+    <a href="https://github.com/dev-centr/themed-svg/stargazers"><img src="https://img.shields.io/github/stars/dev-centr/themed-svg.svg?style=for-the-badge" alt="Stars"></a>
+    <a href="https://github.com/dev-centr/themed-svg/issues"><img src="https://img.shields.io/github/issues/dev-centr/themed-svg.svg?style=for-the-badge" alt="Issues"></a>
+    <a href="https://github.com/dev-centr/themed-svg/blob/main/LICENSE"><img src="https://img.shields.io/github/license/dev-centr/themed-svg.svg?style=for-the-badge" alt="License"></a>
+  </p>
+  <h3>Themed SVG</h3>
+  <p><strong>A semantic light/dark theming standard and structural transformer for web SVG diagrams.</strong></p>
+  <p>
+    <a href="#install-status">Install</a> ·
+    <a href="#manifest-standard">Manifest standard</a> ·
+    <a href="#output-modes">Outputs</a> ·
+    <a href="CHANGELOG.adoc">Changelog</a> ·
+    <a href="LICENSE">MIT license</a>
+  </p>
+</div>
+++++
+endif::[]
+
+Themed SVG gives diagram producers and site builders a shared contract for
+semantic SVG colors. A versioned manifest says what a color _means_ and exactly
+which XML or CSS declaration owns it. The transformer safely produces SVGs that
+can follow the operating-system theme, inherit a host-page palette, or remain
+fully fixed.
+
+The standard is diagram-generator neutral. Mermaid can consume it, but Mermaid
+does not own the architecture, manifest, CSS namespace, or transformer.
+
+== Why two theming layers matter
+
+SVG theming has two separate layers:
+
+. *Mode selection* chooses light or dark. In standalone adaptive output this is
+  `prefers-color-scheme`; a host application may instead use its own state or
+  manual toggle.
+. *Palette selection* maps semantic roles such as `color.text.primary` to actual
+  CSS colors.
+
+Keeping these layers separate lets a build inject a site's light and dark
+palettes without coupling diagrams to that site's theme-switch implementation.
+The package includes conservative bundled light and dark defaults so every
+declared common token has a usable fallback.
+
+Palette values merge in this exact order, from lowest to highest priority:
+
+----
+bundled defaults
+< manifest preset
+< manifest paletteOverrides.light or .dark
+< runtime shared palette
+< runtime light- or dark-specific palette
+----
+
+== The `<img>` CSS boundary
+
+An SVG loaded through `<img src="diagram.svg">` is an isolated document.
+Custom properties from the surrounding HTML page do not cross that boundary.
+Use `standalone-adaptive` for an `<img>` that must switch with the browser's
+light/dark preference, or generate `paired-fixed` files and let the page choose
+the URL.
+
+`host` output is intended for inline SVG. Its `var()` references can inherit
+custom properties from the host document, including values controlled by a
+manual theme toggle.
+
+An adaptive SVG embedded through `<img>` cannot see a host application's
+class-, attribute-, or JavaScript-only manual toggle. It sees media preferences,
+not host DOM state. Build-time site palette injection changes the colors inside
+the standalone file, while mode selection still follows
+`prefers-color-scheme`.
+
+== Install status
+
+`@dev-centr/themed-svg` is *not yet published to npm*. Use a local checkout or
+a GitHub dependency while the standard is pre-release:
+
+[source,bash]
+----
+pnpm add ../themed-svg
+# or pin a commit:
+pnpm add github:dev-centr/themed-svg#<commit>
+----
+
+Node.js 20 or later is supported. Registry installation will be documented
+after the package is published.
+
+== API
+
+[source,typescript]
+----
+import { transformSvg } from '@dev-centr/themed-svg';
+
+const result = transformSvg(sourceSvg, manifest, {
+  // standalone-adaptive is the default
+  palette: sharedSitePalette,
+  lightPalette: siteLightPalette,
+  darkPalette: siteDarkPalette,
+});
+
+if (!result.svg) {
+  console.error(result.diagnostics);
+}
+----
+
+Bindings are authoritative. The transformer never guesses which duplicate
+literal should change. `discoverLiteralColors()` reports literal colors only as
+migration and diagnostics assistance.
+
+== Output modes
+
+`standalone-adaptive` (default)::
+Self-contained SVG with light defaults and a
+`prefers-color-scheme: dark` palette. Suitable for `<img>`.
+
+`host`::
+CSS-variable references with concrete fallbacks, but no media query or injected
+mode palette. Suitable for inline SVG and host-controlled manual toggles.
+
+`fixed`::
+One concrete palette. Contains no `var()` references or theme media query.
+
+`paired-fixed`::
+Separate concrete light and dark SVG strings/files. Both contain no variables
+or media query.
+
+If an SVG has no `viewBox`, the transformer derives one only from positive
+numeric `width` and `height` values. It does not invent dimensions. Missing
+geometry produces a `missing-viewbox` error diagnostic and no output.
+
+== Manifest standard
+
+Version 1 is defined by
+link:schema/themed-svg-manifest-v1.schema.json[`themed-svg-manifest-v1.schema.json`].
+It records namespace, source provenance, semantic tokens, presets, optional
+light/dark palette overrides, explicit bindings, and fallback behavior.
+
+[source,json]
+----
+{
+  "$schema": "https://docs.devcentr.org/themed-svg/schemas/themed-svg-manifest-v1.schema.json",
+  "schemaVersion": 1,
+  "namespace": "architecture-diagram",
+  "source": {
+    "kind": "diagram-generator",
+    "uri": "diagrams/system.mmd",
+    "generator": "mermaid"
+  },
+  "tokens": [
+    { "id": "color.surface.primary", "description": "Primary node surface" },
+    { "id": "color.text.primary", "description": "Primary readable text" }
+  ],
+  "defaultPreset": "light",
+  "presets": {
+    "light": {
+      "color.surface.primary": "#f8fafc",
+      "color.text.primary": "#0f172a"
+    },
+    "dark": {
+      "color.surface.primary": "#1e293b",
+      "color.text.primary": "#f8fafc"
+    }
+  },
+  "paletteOverrides": {
+    "dark": { "color.surface.primary": "#111827" }
+  },
+  "bindings": [
+    {
+      "kind": "presentation",
+      "selector": "#service",
+      "attribute": "fill",
+      "token": "color.surface.primary"
+    },
+    {
+      "kind": "stylesheet",
+      "selector": ".label",
+      "property": "fill",
+      "token": "color.text.primary"
+    }
+  ],
+  "fallback": {
+    "unresolvedToken": "error",
+    "missingTarget": "warn"
+  }
+}
+----
+
+Generated CSS custom properties use the independent namespace
+`--themed-svg-<manifest namespace>-<semantic token>`, with dots normalized to
+hyphens.
+
+== CLI
+
+[source,bash]
+----
+themed-svg --manifest diagram.theme.json diagram.svg > diagram.themed.svg
+
+themed-svg --manifest diagram.theme.json \
+  --mode paired-fixed \
+  --palette shared.json \
+  --light-palette light.json \
+  --dark-palette dark.json \
+  --light-output diagram.light.svg \
+  --dark-output diagram.dark.svg \
+  diagram.svg
+----
+
+Run `themed-svg --help` for all options. Diagnostics go to stderr. Exit code 2
+means the transform reported an error and did not emit output.
+
+== Safety and structural processing
+
+The transformer parses XML with `saxes` and `@xmldom/xmldom`, and parses CSS
+with `postcss` and `postcss-value-parser`. It rejects DOCTYPE declarations,
+scripts, `foreignObject`, event-handler attributes, external links/resources,
+CSS imports, and external CSS URLs.
+
+Selectors deliberately support a safe, deterministic subset. Explicit
+presentation attributes, inline declarations, stylesheet declarations, and
+gradient stops can be bound. Existing IDs and unbound duplicate literals remain
+unchanged.
+
+== Development
+
+[source,bash]
+----
+pnpm install
+pnpm build
+pnpm test:unit
+pnpm exec playwright install chromium
+pnpm test:browser
+pnpm pack
+----
+
+The package is independently packable and has no Mermaid runtime dependency.
+
+== Changelog
+
+See link:CHANGELOG.adoc[CHANGELOG] for the release timeline and detailed change
+records.
+
+== License
+
+Themed SVG is available under the link:LICENSE[MIT License].
+
+== Contact
+
+Use the
+https://github.com/dev-centr/themed-svg/issues[GitHub issue tracker] for bugs,
+standard proposals, and interoperability questions.

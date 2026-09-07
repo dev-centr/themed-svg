@@ -1,0 +1,19 @@
+= Changelog
+
+This timeline records user-visible changes to `@dev-centr/themed-svg`.
+
+== 0.1.0 (unreleased) — 2026-09-07
+
+* Established the independent version 1 semantic theming manifest and JSON
+  Schema.
+* Added safe structural transformation for attributes, inline CSS, stylesheet
+  declarations, and gradient stops.
+* Added standalone-adaptive, host, fixed, and paired-fixed output contracts.
+* Added deterministic five-layer palette precedence and bundled light/dark
+  defaults.
+* Added CLI, diagnostics, browser behavior tests, and npm package boundaries.
+* Required real or numerically derived SVG geometry; missing geometry now
+  returns an error without output.
+
+Details: link:changelog-details/2026-09-07-initial-standard.adoc[Initial
+semantic theming standard].

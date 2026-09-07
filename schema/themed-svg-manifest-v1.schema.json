@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.devcentr.org/themed-svg/schemas/themed-svg-manifest-v1.schema.json",
+  "title": "Themed SVG manifest, version 1",
+  "description": "Explicit semantic token bindings and light/dark palettes for structurally transforming web SVG diagrams.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "namespace",
+    "tokens",
+    "defaultPreset",
+    "presets",
+    "bindings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Stable namespace used in generated --themed-svg-<namespace>-* CSS custom properties."
+    },
+    "source": {
+      "$ref": "#/$defs/sourceProvenance"
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/token"
+      }
+    },
+    "defaultPreset": {
+      "type": "string",
+      "minLength": 1
+    },
+    "presets": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/palette"
+      }
+    },
+    "paletteOverrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "light": {
+          "$ref": "#/$defs/palette"
+        },
+        "dark": {
+          "$ref": "#/$defs/palette"
+        }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/presentationBinding"
+          },
+          {
+            "$ref": "#/$defs/inlineStyleBinding"
+          },
+          {
+            "$ref": "#/$defs/stylesheetBinding"
+          },
+          {
+            "$ref": "#/$defs/gradientStopBinding"
+          }
+        ]
+      }
+    },
+    "fallback": {
+      "$ref": "#/$defs/fallbackBehavior"
+    }
+  },
+  "$defs": {
+    "sourceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uri": {
+          "type": "string"
+        },
+        "generator": {
+          "type": "string"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "token": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "palette": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "fallbackBehavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unresolvedToken": {
+          "enum": [
+            "error",
+            "preserve"
+          ]
+        },
+        "missingTarget": {
+          "enum": [
+            "error",
+            "warn"
+          ]
+        }
+      }
+    },
+    "presentationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "token",
+        "selector",
+        "attribute"
+      ],
+      "properties": {
+        "kind": {
+          "const": "presentation"
+        },
+        "token": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attribute": {
+          "enum": [
+            "fill",
+            "stroke",
+            "color",
+            "stop-color",
+            "flood-color",
+            "lighting-color"
+          ]
+        }
+      }
+    },
+    "inlineStyleBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "token",
+        "selector",
+        "property"
+      ],
+      "properties": {
+        "kind": {
+          "const": "inline-style"
+        },
+        "token": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "property": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "stylesheetBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "token",
+        "selector",
+        "property"
+      ],
+      "properties": {
+        "kind": {
+          "const": "stylesheet"
+        },
+        "token": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "property": {
+          "type": "string",
+          "minLength": 1
+        },
+        "styleSelector": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "gradientStopBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "token",
+        "selector"
+      ],
+      "properties": {
+        "kind": {
+          "const": "gradient-stop"
+        },
+        "token": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

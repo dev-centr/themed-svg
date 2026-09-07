@@ -1,0 +1,61 @@
+{
+  "name": "@dev-centr/themed-svg",
+  "version": "0.1.0",
+  "description": "A semantic light/dark theming standard and structural transformer for web SVG diagrams.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dev-centr/themed-svg.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dev-centr/themed-svg/issues"
+  },
+  "homepage": "https://github.com/dev-centr/themed-svg#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./schema": "./schema/themed-svg-manifest-v1.schema.json",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "themed-svg": "./bin/themed-svg.js"
+  },
+  "files": [
+    "dist/src",
+    "bin",
+    "schema",
+    "README.md",
+    "README.adoc",
+    "CHANGELOG.adoc",
+    "changelog-details",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "pnpm run clean && tsc -p tsconfig.json",
+    "test": "pnpm run test:unit && pnpm run test:browser",
+    "test:unit": "pnpm run build && node --test dist/test/*.test.js",
+    "test:browser": "pnpm run build && playwright test --project=chromium",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.11",
+    "postcss": "^8.5.6",
+    "postcss-value-parser": "^4.2.0",
+    "saxes": "^6.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.15.1"
+}
