@@ -96,3 +96,28 @@ A migration set is complete only after source regeneration is deterministic,
 manual host modes are readable, XML and accessibility checks pass, affected
 site builds pass, generated copies are synchronized, and repository commits
 are pushed.
+
+== Completion record
+
+The initial migration completed on 2026-09-08.
+
+* `@dev-centr/themed-svg` `0.1.1` supplies progressive fallback upgrades.
+* `@dev-centr/mermaid-svg-css-vars` `0.1.2` supplies atomic dual output and
+  freshness checking.
+* Sixty-four genuine diagram families now have Mermaid source, explicit
+  manifests, standalone-adaptive SVGs, host SVGs, and retained fixed originals.
+* Two additional UI/legend families remain hand-authored but now ship adaptive
+  and host-safe themed forms without being misclassified as Mermaid diagrams.
+* Canonical PlayTime output is pinned to the general-knowledge source and
+  synchronized into Scriptbook, DevCentr specifications, Equivalence Engine,
+  and devcentr.org without duplicating editable source.
+* OpenShell, Dlang Supplemental, FoodTruckNerdz, HCI Nerdz, Desktop Tooling,
+  Connectome FS, and DevCentr hub deployments passed after migration.
+* Every migration commit is reachable from its repository's remote default
+  branch. The modified FoodTruckNerdz fork was merged through a ready-for-review
+  pull request; no draft pull request was used.
+
+Some primary local checkouts were concurrently used by other work during this
+migration. Those unrelated dirty trees were not reset, staged, or committed.
+Isolated worktrees supplied clean source-of-truth commits and remote validation
+where shared checkouts were unsafe.
