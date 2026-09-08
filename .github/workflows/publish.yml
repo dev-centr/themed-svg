@@ -24,7 +24,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
           package-manager-cache: false
       - name: Install current npm CLI
-        run: npm install --global npm@11.9.0
+        run: npm install --global npm@11.19.1
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - name: Verify release tag
