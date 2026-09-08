@@ -1,0 +1,98 @@
+= Owned-organization diagram migration ledger
+:toc:
+:toclevels: 2
+
+This ledger records the September 2026 migration from fixed or page-isolated
+diagram SVGs to editable Mermaid source, explicit Themed SVG manifests,
+standalone-adaptive assets, and progressively injected host assets.
+
+The audit classifies authored SVG and inline SVG material before conversion.
+Logos, icons, decorative art, UI mockups, generated status cards, fixtures, and
+inherited fork assets remain outside the diagram migration. A fork is included
+only when Ryan Johnson's commits introduced or materially changed the diagram.
+
+== Artifact contract
+
+Each migrated diagram keeps:
+
+* `name.mmd` as editable source;
+* `name.theme.json` as semantic bindings and palette metadata;
+* `name.svg` as the portable standalone-adaptive asset;
+* `name.host.svg` as the sanitized runtime-injection asset; and
+* the previous fixed asset when it remains useful for uploads or comparison.
+
+Owned sites reference `name.svg` in source and progressively upgrade marked
+images to `name.host.svg`. Failure or absent JavaScript leaves the portable
+asset visible.
+
+== Migration sets
+
+[cols="2,4,1"]
+|===
+| Owner | Canonical migration set | Diagrams
+
+| dev-centr
+| Ten PlayTime relationship diagrams in `general-knowledge`, nine additional
+general-knowledge diagrams, two agent-rules diagrams, two uniconfig diagrams,
+and the Antora nav-typology diagram. Generated PlayTime copies deploy to
+Scriptbook, DevCentr specifications, Equivalence Engine, and devcentr.org.
+| 24
+
+| openshellorg
+| Eight PlayTime relationship diagrams plus four existing Mermaid architecture
+sources. `shell-architecture` is authoritative for OpenShell deployment to
+opensh.org.
+| 12
+
+| dlang-supplemental
+| Four TGC architecture, comparison, and stop-the-world timeline diagrams.
+The docs component is authoritative for the legacy static site.
+| 4
+
+| FoodTruckNerdz
+| Seven Antora PlantUML diagrams converted to Mermaid and four relationship
+diagrams introduced in the modified `ftn-site` fork. The role-lens UI mock
+remains hand-authored and may receive adaptive colors without becoming Mermaid.
+| 11
+
+| HCI-Nerdz
+| Three static topology diagrams, three canonical Antora Mermaid blocks, and
+two distinct Astro editorial variants. Exact site copies deploy from the
+Antora source of truth.
+| 8
+
+| Desktop-Tooling
+| Three Thumbelina partition-layout diagrams.
+| 3
+
+| connectome-fs
+| The canonical navigating-by-content concept diagram and its compact site
+derivative.
+| 2
+|===
+
+== Explicit retained material
+
+The following audited material remains unchanged by the diagram converter:
+
+* Dev-Centr PlayTime metaphor illustrations, access UI mocks, product logos,
+  navigation icons, generated SVG responses, and package fixtures.
+* OpenShell PlayTime metaphor illustrations, brand assets, controls, and
+  inherited terminal assets.
+* Dlang TGC desktop/terminal mocks, branding, third-party assets, GLFW
+  `spaces.svg`, and inherited D-language fork diagrams.
+* FoodTruckNerdz branding, store badges, controls, decorative artwork, and
+  upstream fork content. The AMDphreak-authored diagram additions in the
+  `ftn-site` fork are the sole fork exception.
+* HCI provenance legends, concept icons, framework marks, flags, controls, and
+  brand assets.
+* All audited SVGs in Antora Supplemental, LinxPhotos, nonprofit-resources,
+  PolyglotScan, RepoLab, and formatte; none are relationship diagrams.
+
+== Verification gate
+
+A migration set is complete only after source regeneration is deterministic,
+`--dual-output --check` passes, both adaptive color-scheme renders and both
+manual host modes are readable, XML and accessibility checks pass, affected
+site builds pass, generated copies are synchronized, and repository commits
+are pushed.

@@ -2,6 +2,7 @@
 !.gitignore
 !README.adoc
 !README.md
+!ORG-MIGRATION.adoc
 !CHANGELOG.adoc
 !changelog-details/
 !changelog-details/**

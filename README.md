@@ -92,6 +92,8 @@ diagram-generator neutral.
 
 See the full [visitor README](README.adoc), the
 [version 1 schema](schema/themed-svg-manifest-v1.schema.json), and the
-[changelog](CHANGELOG.adoc).
+[changelog](CHANGELOG.adoc). The
+[owned-organization migration ledger](ORG-MIGRATION.adoc) records the initial
+diagram inventory, canonical source chains, exclusions, and verification gate.
 
 Licensed under the [MIT License](LICENSE). Requires Node.js 20 or later.

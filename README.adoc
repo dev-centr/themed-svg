@@ -394,6 +394,10 @@ The package is independently packable and has no Mermaid runtime dependency.
 See link:CHANGELOG.adoc[CHANGELOG] for the release timeline and detailed change
 records.
 
+The link:ORG-MIGRATION.adoc[owned-organization migration ledger] records the
+diagram inventory, canonical source chains, exclusions, and verification gate
+used for the initial rollout.
+
 == License
 
 Themed SVG is available under the link:LICENSE[MIT License].
