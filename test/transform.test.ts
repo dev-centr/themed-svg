@@ -114,8 +114,12 @@ describe('structural transformation golden behavior', () => {
     assert.equal((result.svg!.match(/fill="#eee"/g) ?? []).length, 2);
   });
 
-  it('defaults to standalone adaptive and supports all output contracts', () => {
-    const adaptive = transformSvg(svg, manifest);
+  it('defaults to host output and supports all output contracts', () => {
+    const hostDefault = transformSvg(svg, manifest);
+    assert.match(hostDefault.svg!, /var\(--themed-svg-test-diagram-color-surface-primary, #eeeeee\)/);
+    assert.doesNotMatch(hostDefault.svg!, /prefers-color-scheme/);
+
+    const adaptive = transformSvg(svg, manifest, { mode: 'standalone-adaptive' });
     assert.match(adaptive.svg!, /var\(--themed-svg-test-diagram-color-surface-primary, #eeeeee\)/);
     assert.match(adaptive.svg!, /prefers-color-scheme:dark/);
 
@@ -180,6 +184,8 @@ describe('structural transformation golden behavior', () => {
       '<!DOCTYPE svg><svg/>',
       '<svg><script/></svg>',
       '<svg><foreignObject/></svg>',
+      '<svg><animate attributeName="href" to="https://example.com"/></svg>',
+      '<svg><set attributeName="onclick" to="alert(1)"/></svg>',
       '<svg><rect onclick="alert(1)"/></svg>',
       '<svg><image href="https://example.com/x.png"/></svg>',
       '<svg><style>@import "https://example.com/x.css"</style></svg>',
@@ -189,6 +195,23 @@ describe('structural transformation golden behavior', () => {
       const result = transformSvg(unsafe, manifest);
       assert.ok(result.diagnostics.some(({ severity }) => severity === 'error'), unsafe);
       assert.equal(result.svg, undefined);
+    }
+  });
+
+  it('rejects non-concrete and injectable palette values', () => {
+    for (const value of [
+      'url(https://example.com/x.svg)',
+      'var(--attacker)',
+      'currentColor',
+      'not-a-css-color',
+      'red;stroke:url(https://example.com/x)',
+      '#fff}</style><script>alert(1)</script>',
+    ]) {
+      const result = transformSvg(svg, manifest, {
+        palette: { 'color.surface.primary': value },
+      });
+      assert.equal(result.svg, undefined);
+      assert.ok(result.diagnostics.some(({ code }) => code === 'invalid-palette'), value);
     }
   });
 
@@ -247,9 +270,19 @@ describe('CLI', () => {
     assert.match(readFileSync(lightOutput, 'utf8'), /fill="#abcdef"/);
     assert.match(readFileSync(darkOutput, 'utf8'), /fill="#fedcba"/);
 
+    const host = spawnSync(process.execPath, [
+      'bin/themed-svg.js',
+      '--manifest', manifestPath,
+      input,
+    ], { encoding: 'utf8' });
+    assert.equal(host.status, 0, host.stderr);
+    assert.doesNotMatch(host.stdout, /prefers-color-scheme:dark/);
+    assert.match(host.stdout, /var\(--themed-svg-test-diagram/);
+
     const adaptive = spawnSync(process.execPath, [
       'bin/themed-svg.js',
       '--manifest', manifestPath,
+      '--mode', 'standalone-adaptive',
       input,
     ], { encoding: 'utf8' });
     assert.equal(adaptive.status, 0, adaptive.stderr);

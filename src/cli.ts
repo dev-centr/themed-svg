@@ -26,7 +26,7 @@ Structurally bind semantic theme tokens to explicitly selected SVG targets.
 Options:
   -o, --output <file>         Output path (stdout by default)
   -m, --manifest <file>       Version 1 explicit-binding manifest
-  --mode <mode>               standalone-adaptive (default), fixed, host, paired-fixed
+  --mode <mode>               host (default), standalone-adaptive, fixed, paired-fixed
   --preset <name>             Preset for fixed/host fallback
   --palette <file>            Shared runtime JSON palette
   --light-palette <file>      Runtime light-mode JSON palette
@@ -43,7 +43,7 @@ Exit codes: 0 success, 1 usage/runtime failure, 2 transform diagnostics.
 function parse(argv: string[]): Arguments {
   const result: Arguments = {
     input: '',
-    mode: 'standalone-adaptive',
+    mode: 'host',
     help: false,
     version: false,
   };

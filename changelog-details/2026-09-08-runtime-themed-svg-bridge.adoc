@@ -1,0 +1,31 @@
+= Runtime themed SVG bridge
+:page-audience: Web application authors and SVG tooling integrators
+:page-usage-context: release detail
+:page-orig-author: Auto on behalf of Ryan Johnson
+:page-last-author: Auto on behalf of Ryan Johnson
+
+Host-mode SVG is now the default output and `<themed-svg>` is the recommended
+web delivery path. The component fetches already generated host output,
+sanitizes it, applies accessible naming, and atomically inserts it into a
+dedicated shadow root. Host CSS custom properties remain live while SVG IDs and
+embedded style rules stay isolated.
+
+The runtime accepts same-origin HTTP(S) sources by default. Cross-origin sources
+require an explicit JavaScript-only trusted-origin allowlist. Requested and
+redirected URLs are both checked; credentials, status, SVG MIME type, declared
+length, and received bytes are constrained. Every accepted response passes
+DOMPurify's SVG profile and stricter fail-closed DOM and CSS validation.
+
+The package includes an SSR-safe explicit runtime module and a self-contained
+ESM browser bundle that automatically registers the component. Reloads abort
+older work, stale responses cannot commit, and failures retain the last valid
+SVG. Accessibility supports decorative images, generated title and description
+references, and preservation of existing accessible names.
+
+Standalone-adaptive output remains available explicitly for no-JavaScript
+external images. Fixed and paired-fixed output continue to serve concrete
+external-image workflows.
+
+Transformation now rejects non-concrete or injectable palette values and SMIL
+mutation elements. A final safety pass validates output after bindings,
+metadata, and adaptive styles have been added.

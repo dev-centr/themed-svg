@@ -14,6 +14,15 @@ This timeline records user-visible changes to `@dev-centr/themed-svg`.
 * Added CLI, diagnostics, browser behavior tests, and npm package boundaries.
 * Required real or numerically derived SVG geometry; missing geometry now
   returns an error without output.
+* Made host-mode output the API and CLI default and added the sanitizing
+  `<themed-svg>` runtime bridge as the recommended web delivery path.
+* Added a self-contained browser ESM registration bundle, explicit runtime API,
+  strict source/redirect/size/MIME policy, shadow isolation, accessible naming,
+  and race-safe reload behavior.
+* Hardened transformation against injectable palette values and SMIL mutation,
+  with a second completed-output safety pass.
 
 Details: link:changelog-details/2026-09-07-initial-standard.adoc[Initial
-semantic theming standard].
+semantic theming standard] and
+link:changelog-details/2026-09-08-runtime-themed-svg-bridge.adoc[Runtime themed
+SVG bridge].

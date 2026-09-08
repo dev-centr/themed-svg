@@ -11,7 +11,7 @@ diagrams.
 import { transformSvg } from '@dev-centr/themed-svg';
 
 const result = transformSvg(svg, manifest, {
-  // standalone-adaptive is the default
+  // host is the default
   palette: sharedPalette,
   lightPalette,
   darkPalette,
@@ -30,10 +30,31 @@ bundled defaults
 < runtime mode-specific palette
 ```
 
-Output modes are `standalone-adaptive` (default), `host`, `fixed`, and
-`paired-fixed`. SVGs loaded through `<img>` cannot inherit CSS variables from
-the host page; use adaptive or paired output for that boundary. Inline host SVG
-can inherit variables and follow a manual host toggle.
+The recommended web path is default `host` output loaded by the sanitizing
+`<themed-svg>` runtime component:
+
+```html
+<script type="module">
+  import '@dev-centr/themed-svg/register';
+</script>
+<themed-svg src="/diagram.host.svg" alt="System architecture"></themed-svg>
+```
+
+Use `standalone-adaptive` explicitly for a no-JavaScript external `<img>` that
+follows `prefers-color-scheme`, or use `fixed`/`paired-fixed` external images.
+External images cannot inherit host CSS variables.
+
+The self-contained registration bundle is available at
+`browser/themed-svg-element.js`. After publication it can be loaded from the
+version-pinned npm CDN URL
+`https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.0/browser/themed-svg-element.js`;
+pre-release commits can use
+`https://cdn.jsdelivr.net/gh/dev-centr/themed-svg@COMMIT/browser/themed-svg-element.js`.
+The explicit APIs are exported from `@dev-centr/themed-svg/runtime`.
+
+Runtime sources are same-origin HTTP(S) by default. Cross-origin access requires
+a JavaScript-only `trustedOrigins` allowlist; redirects are rechecked and every
+response is sanitized regardless of trust.
 
 The transformer rejects active and external content and changes only explicitly
 bound attributes or CSS declarations. Literal color discovery is diagnostics

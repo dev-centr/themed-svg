@@ -99,6 +99,7 @@ export interface TransformOptions {
 export type DiagnosticCode =
   | 'unsafe-construct'
   | 'unsupported-construct'
+  | 'invalid-palette'
   | 'missing-selector'
   | 'missing-property'
   | 'missing-viewbox'

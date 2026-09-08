@@ -39,7 +39,7 @@ test('img resource CSS is isolated from its host document', async ({ page }) => 
 });
 
 test('standalone adaptive img follows light and dark preferences', async ({ page }) => {
-  const adaptive = transformSvg(source, manifest).svg!;
+  const adaptive = transformSvg(source, manifest, { mode: 'standalone-adaptive' }).svg!;
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await imagePixel(page, adaptive)).toEqual([255, 0, 0, 255]);
   await page.emulateMedia({ colorScheme: 'dark' });

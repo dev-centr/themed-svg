@@ -1,4 +1,5 @@
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
+import colorNames from 'color-name';
 import postcss, { type Declaration, type Rule } from 'postcss';
 import valueParser from 'postcss-value-parser';
 import { SaxesParser } from 'saxes';
@@ -21,6 +22,16 @@ type XmlDocument = any;
 const COLOR_VALUE = /^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([^)]*\)|[a-z]+)$/i;
 const SAFE_HREF = /^(?:#|data:image\/(?:png|gif|jpeg|webp);base64,)/i;
 const NUMERIC_DIMENSION = /^\s*(?:\d+(?:\.\d+)?|\.\d+)\s*(?:px)?\s*$/i;
+const SMIL_MUTATION_TAGS = new Set([
+  'animate',
+  'animatemotion',
+  'animatetransform',
+  'set',
+  'discard',
+]);
+const HEX_COLOR = /^(?:#[0-9a-f]{3,4}|#[0-9a-f]{6}|#[0-9a-f]{8})$/i;
+const NUMERIC_COLOR_FUNCTION = /^(?:rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\(\s*[0-9.+,%/\s-]*(?:(?:deg|grad|rad|turn)[0-9.+,%/\s-]*)?\)$/i;
+const COLOR_SPACE_FUNCTION = /^color\(\s*(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz|xyz-d50|xyz-d65)\s+[0-9.+%/\s-]+\)$/i;
 
 export class ThemedSvgError extends Error {
   constructor(
@@ -183,6 +194,15 @@ function inspectCss(css: string, context: string, diagnostics: Diagnostic[]): vo
       });
     });
     root.walkDecls((declaration) => {
+      if (/(?:expression\s*\(|(?:^|[;\s])behavior\s*:|-moz-binding\s*:)/i.test(
+        `${declaration.prop}:${declaration.value}`
+      )) {
+        diagnostics.push({
+          code: 'unsafe-construct',
+          severity: 'error',
+          message: `Active CSS is forbidden in ${context}.`,
+        });
+      }
       valueParser(declaration.value).walk((node) => {
         if (node.type !== 'function' || node.value.toLowerCase() !== 'url') return;
         const target = valueParser.stringify(node.nodes).trim().replace(/^['"]|['"]$/g, '');
@@ -208,7 +228,7 @@ function safetyDiagnostics(document: XmlDocument): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const element of elements(document.documentElement)) {
     const tag = String(element.tagName).toLowerCase();
-    if (tag === 'script' || tag === 'foreignobject') {
+    if (tag === 'script' || tag === 'foreignobject' || SMIL_MUTATION_TAGS.has(tag)) {
       diagnostics.push({
         code: 'unsafe-construct',
         severity: 'error',
@@ -238,6 +258,29 @@ function safetyDiagnostics(document: XmlDocument): Diagnostic[] {
     if (tag === 'style') inspectCss(element.textContent ?? '', '<style>', diagnostics);
     const style = element.getAttribute('style');
     if (style) inspectCss(`x{${style}}`, `style attribute on <${element.tagName}>`, diagnostics);
+  }
+  return diagnostics;
+}
+
+function validatePalette(palette: Palette, context: string): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  for (const [token, rawValue] of Object.entries(palette)) {
+    const value = rawValue.trim();
+    const namedColor = value.toLowerCase();
+    if (
+      !HEX_COLOR.test(value)
+      && !NUMERIC_COLOR_FUNCTION.test(value)
+      && !COLOR_SPACE_FUNCTION.test(value)
+      && namedColor !== 'transparent'
+      && !(namedColor in colorNames)
+    ) {
+      diagnostics.push({
+        code: 'invalid-palette',
+        severity: 'error',
+        message: `Palette value for "${token}" in ${context} is not a concrete CSS color.`,
+      });
+      continue;
+    }
   }
   return diagnostics;
 }
@@ -516,16 +559,26 @@ function transformOne(
   if (diagnostics.some(({ severity }) => severity === 'error')) return { diagnostics };
 
   const palette = resolvePalette(manifest, preset, paletteMode, options);
+  diagnostics.push(...validatePalette(palette, `${preset} palette`));
+  if (diagnostics.some(({ severity }) => severity === 'error')) return { diagnostics };
   applyBindings(parsed.document, manifest, outputMode, palette, diagnostics);
   applyMetadata(parsed.document, options);
   if (outputMode === 'standalone-adaptive') {
+    const light = resolvePalette(manifest, 'light', 'light', options);
+    const dark = resolvePalette(manifest, 'dark', 'dark', options);
+    diagnostics.push(
+      ...validatePalette(light, 'light palette'),
+      ...validatePalette(dark, 'dark palette')
+    );
+    if (diagnostics.some(({ severity }) => severity === 'error')) return { diagnostics };
     injectAdaptivePresets(
       parsed.document,
       manifest,
-      resolvePalette(manifest, 'light', 'light', options),
-      resolvePalette(manifest, 'dark', 'dark', options)
+      light,
+      dark
     );
   }
+  diagnostics.push(...safetyDiagnostics(parsed.document));
   if (diagnostics.some(({ severity }) => severity === 'error')) return { diagnostics };
   return { svg: new XMLSerializer().serializeToString(parsed.document), diagnostics };
 }
@@ -535,7 +588,7 @@ export function transformSvg(
   manifest: ThemedSvgManifest,
   options: TransformOptions = {}
 ): TransformResult {
-  const mode = options.mode ?? 'standalone-adaptive';
+  const mode = options.mode ?? 'host';
   if (mode === 'paired-fixed') {
     const light = transformOne(svg, manifest, 'fixed', 'light', 'light', options);
     const dark = transformOne(svg, manifest, 'fixed', 'dark', 'dark', options);

@@ -33,6 +33,11 @@ which XML or CSS declaration owns it. The transformer safely produces SVGs that
 can follow the operating-system theme, inherit a host-page palette, or remain
 fully fixed.
 
+The recommended web path is host-mode output loaded through `<themed-svg>`.
+The runtime fetches and sanitizes the generated SVG, then inserts it into a
+dedicated shadow root. Host CSS custom properties inherit into the SVG while
+its IDs and embedded styles remain isolated.
+
 The standard is diagram-generator neutral. Mermaid can consume it, but Mermaid
 does not own the architecture, manifest, CSS namespace, or transformer.
 
@@ -61,11 +66,25 @@ bundled defaults
 < runtime light- or dark-specific palette
 ----
 
-== The `<img>` CSS boundary
+== Web delivery choices
+
+Runtime-inlined host SVG (recommended)::
+Generate `host` output (the default) and load it with `<themed-svg>`. This
+supports live host variables and manual application theme toggles while keeping
+SVG IDs and styles inside a shadow root.
+
+Standalone-adaptive external image::
+Choose `--mode standalone-adaptive` and use `<img>` when JavaScript is
+unavailable or unwanted. The SVG follows `prefers-color-scheme`, but cannot see
+host application state or custom properties.
+
+Fixed or paired external images::
+Choose `fixed` for one concrete palette, or `paired-fixed` for separate light
+and dark files selected by the page.
 
 An SVG loaded through `<img src="diagram.svg">` is an isolated document.
 Custom properties from the surrounding HTML page do not cross that boundary.
-Use `standalone-adaptive` for an `<img>` that must switch with the browser's
+Use explicit `standalone-adaptive` for an `<img>` that must switch with the browser's
 light/dark preference, or generate `paired-fixed` files and let the page choose
 the URL.
 
@@ -101,7 +120,7 @@ after the package is published.
 import { transformSvg } from '@dev-centr/themed-svg';
 
 const result = transformSvg(sourceSvg, manifest, {
-  // standalone-adaptive is the default
+  // host is the default
   palette: sharedSitePalette,
   lightPalette: siteLightPalette,
   darkPalette: siteDarkPalette,
@@ -116,15 +135,80 @@ Bindings are authoritative. The transformer never guesses which duplicate
 literal should change. `discoverLiteralColors()` reports literal colors only as
 migration and diagnostics assistance.
 
+=== Runtime component
+
+The local package export is a self-contained browser ESM bundle. Importing it
+registers `<themed-svg>`:
+
+[source,html]
+----
+<script type="module">
+  import '@dev-centr/themed-svg/register';
+</script>
+
+<themed-svg
+  src="/diagrams/system.host.svg"
+  alt="System architecture"
+  description="Requests pass through the gateway to two services."
+></themed-svg>
+----
+
+After npm publication, a version-pinned CDN import can use:
+
+[source,html]
+----
+<script type="module"
+  src="https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.0/browser/themed-svg-element.js">
+</script>
+----
+
+Before publication, use a commit-pinned GitHub URL after that commit contains
+the generated bundle:
+
+[source,html]
+----
+<script type="module"
+  src="https://cdn.jsdelivr.net/gh/dev-centr/themed-svg@COMMIT/browser/themed-svg-element.js">
+</script>
+----
+
+Cross-origin sources are rejected by default. HTML cannot widen trust. Register
+explicitly from JavaScript when a known asset origin is required:
+
+[source,typescript]
+----
+import { defineThemedSvgElement } from '@dev-centr/themed-svg/runtime';
+
+defineThemedSvgElement({
+  trustedOrigins: ['https://assets.example.com'],
+});
+----
+
+The function API offers the same loader without automatic registration:
+
+[source,typescript]
+----
+import { mountThemedSvg } from '@dev-centr/themed-svg/runtime';
+
+const mount = mountThemedSvg(container, '/diagrams/system.host.svg', {
+  alt: 'System architecture',
+});
+await mount.loaded;
+----
+
+The component supports `src`, `alt`, and `description`; `reload()` and
+`abort()`; `loading`, `loaded`, and `error` state attributes; and `load`,
+`error`, and `abort` events.
+
 == Output modes
 
-`standalone-adaptive` (default)::
+`host` (default)::
+CSS-variable references with concrete fallbacks, but no media query or injected
+mode palette. Intended for the runtime component and host-controlled toggles.
+
+`standalone-adaptive`::
 Self-contained SVG with light defaults and a
 `prefers-color-scheme: dark` palette. Suitable for `<img>`.
-
-`host`::
-CSS-variable references with concrete fallbacks, but no media query or injected
-mode palette. Suitable for inline SVG and host-controlled manual toggles.
 
 `fixed`::
 One concrete palette. Contains no `var()` references or theme media query.
@@ -221,8 +305,16 @@ means the transform reported an error and did not emit output.
 
 The transformer parses XML with `saxes` and `@xmldom/xmldom`, and parses CSS
 with `postcss` and `postcss-value-parser`. It rejects DOCTYPE declarations,
-scripts, `foreignObject`, event-handler attributes, external links/resources,
-CSS imports, and external CSS URLs.
+scripts, `foreignObject`, SMIL mutation, event-handler attributes, external
+links/resources, CSS imports, external CSS URLs, and injectable palette values.
+It validates the completed output again after all generated changes.
+
+The browser runtime applies DOMPurify's SVG profile and additional fail-closed
+DOM and CSS checks. It accepts same-origin HTTP(S) by default, verifies redirect
+destinations, requires successful `image/svg+xml` responses, limits declared
+and received bytes, and never inserts untrusted strings with `innerHTML`.
+Trusted origins are an explicit JavaScript-only allowlist and do not bypass
+sanitization.
 
 Selectors deliberately support a safe, deterministic subset. Explicit
 presentation attributes, inline declarations, stylesheet declarations, and

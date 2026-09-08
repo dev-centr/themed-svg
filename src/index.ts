@@ -8,3 +8,15 @@ export {
   transformSvg,
   validateManifest,
 } from './transform.js';
+export {
+  ThemedSvgRuntimeError,
+  defineThemedSvgElement,
+  mountThemedSvg,
+} from './runtime.js';
+export type {
+  DefineThemedSvgElementOptions,
+  MountThemedSvgOptions,
+  ThemedSvgAccessibility,
+  ThemedSvgMount,
+  ThemedSvgRuntimeErrorCode,
+} from './runtime.js';
