@@ -44,6 +44,12 @@ Use `standalone-adaptive` explicitly for a no-JavaScript external `<img>` that
 follows `prefers-color-scheme`, or use `fixed`/`paired-fixed` external images.
 External images cannot inherit host CSS variables.
 
+If an existing SVG only needs runtime injection for CSS styling, use an
+established injector such as
+[`@iconfu/svg-inject`](https://www.npmjs.com/package/@iconfu/svg-inject).
+Use `themed-svg` when semantic manifests, palette merging, multiple build
+outputs, or its stricter runtime contract are also needed.
+
 The self-contained registration bundle is available at
 `browser/themed-svg-element.js`. After publication it can be loaded from the
 version-pinned npm CDN URL

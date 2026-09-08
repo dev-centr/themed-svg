@@ -82,6 +82,13 @@ Fixed or paired external images::
 Choose `fixed` for one concrete palette, or `paired-fixed` for separate light
 and dark files selected by the page.
 
+Injection without the theming standard::
+If an existing SVG only needs to be fetched and inserted into the DOM for CSS
+styling, use an established injector such as
+https://www.npmjs.com/package/@iconfu/svg-inject[`@iconfu/svg-inject`].
+`themed-svg` is useful when the project also needs semantic manifests, palette
+merging, fixed/adaptive/host build outputs, or its stricter runtime contract.
+
 An SVG loaded through `<img src="diagram.svg">` is an isolated document.
 Custom properties from the surrounding HTML page do not cross that boundary.
 Use explicit `standalone-adaptive` for an `<img>` that must switch with the browser's
