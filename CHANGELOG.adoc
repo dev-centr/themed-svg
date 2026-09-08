@@ -2,6 +2,10 @@
 
 This timeline records user-visible changes to `@dev-centr/themed-svg`.
 
+== Unreleased
+
+* Fixed tag publishing to install Chromium for browser tests and detect already-published versions without registry credentials.
+
 == 0.1.0 — 2026-09-08
 
 * Established the independent version 1 semantic theming manifest and JSON
