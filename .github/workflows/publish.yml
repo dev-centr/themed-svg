@@ -1,0 +1,48 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: github.repository == 'dev-centr/themed-svg'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
+      - name: Install current npm CLI
+        run: npm install --global npm@11.9.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - name: Verify release tag
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          test "v${version}" = "${GITHUB_REF_NAME}"
+      - name: Check registry
+        id: registry
+        shell: bash
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish
+        if: steps.registry.outputs.publish == 'true'
+        run: pnpm publish --access public --no-git-checks

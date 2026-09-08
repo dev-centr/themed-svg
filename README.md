@@ -3,9 +3,9 @@
 A semantic light/dark theming standard and structural transformer for web SVG
 diagrams.
 
-> **Install status:** This package is not yet published to npm. Use a local
-> checkout (`pnpm add ../themed-svg`) or pin a GitHub commit
-> (`pnpm add github:dev-centr/themed-svg#<commit>`).
+```bash
+pnpm add @dev-centr/themed-svg
+```
 
 ```ts
 import { transformSvg } from '@dev-centr/themed-svg';
@@ -51,8 +51,7 @@ Use `themed-svg` when semantic manifests, palette merging, multiple build
 outputs, or its stricter runtime contract are also needed.
 
 The self-contained registration bundle is available at
-`browser/themed-svg-element.js`. After publication it can be loaded from the
-version-pinned npm CDN URL
+`browser/themed-svg-element.js` and from the version-pinned npm CDN URL
 `https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.0/browser/themed-svg-element.js`;
 pre-release commits can use
 `https://cdn.jsdelivr.net/gh/dev-centr/themed-svg@COMMIT/browser/themed-svg-element.js`.

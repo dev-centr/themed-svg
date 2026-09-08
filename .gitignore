@@ -8,6 +8,9 @@
 !LICENSE
 !package.json
 !pnpm-lock.yaml
+!.github/
+!.github/workflows/
+!.github/workflows/publish.yml
 !tsconfig.json
 !playwright.config.ts
 !src/

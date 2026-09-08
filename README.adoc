@@ -105,20 +105,14 @@ not host DOM state. Build-time site palette injection changes the colors inside
 the standalone file, while mode selection still follows
 `prefers-color-scheme`.
 
-== Install status
-
-`@dev-centr/themed-svg` is *not yet published to npm*. Use a local checkout or
-a GitHub dependency while the standard is pre-release:
+== Installation
 
 [source,bash]
 ----
-pnpm add ../themed-svg
-# or pin a commit:
-pnpm add github:dev-centr/themed-svg#<commit>
+pnpm add @dev-centr/themed-svg
 ----
 
-Node.js 20 or later is supported. Registry installation will be documented
-after the package is published.
+Node.js 20 or later is supported.
 
 == API
 

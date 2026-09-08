@@ -2,7 +2,7 @@
 
 This timeline records user-visible changes to `@dev-centr/themed-svg`.
 
-== 0.1.0 (unreleased) — 2026-09-07
+== 0.1.0 — 2026-09-08
 
 * Established the independent version 1 semantic theming manifest and JSON
   Schema.
