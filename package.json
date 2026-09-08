@@ -1,6 +1,6 @@
 {
   "name": "@dev-centr/themed-svg",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A semantic light/dark theming standard and structural transformer for web SVG diagrams.",
   "type": "module",
   "license": "MIT",

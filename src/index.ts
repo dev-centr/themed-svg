@@ -11,7 +11,10 @@ export {
 export {
   ThemedSvgRuntimeError,
   defineThemedSvgElement,
+  hostSvgSource,
   mountThemedSvg,
+  upgradeThemedSvgImage,
+  upgradeThemedSvgImages,
 } from './runtime.js';
 export type {
   DefineThemedSvgElementOptions,
@@ -19,4 +22,6 @@ export type {
   ThemedSvgAccessibility,
   ThemedSvgMount,
   ThemedSvgRuntimeErrorCode,
+  UpgradeThemedSvgImageOptions,
+  UpgradeThemedSvgImagesOptions,
 } from './runtime.js';

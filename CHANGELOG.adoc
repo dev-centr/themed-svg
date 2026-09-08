@@ -4,7 +4,21 @@ This timeline records user-visible changes to `@dev-centr/themed-svg`.
 
 == Unreleased
 
-* Fixed tag publishing to install Chromium for browser tests and detect already-published versions without registry credentials.
+== 0.1.1 — 2026-09-08
+
+* Added progressive enhancement for portable adaptive `<img>` diagrams.
+* Added deterministic `.svg` to `.host.svg` source derivation and batch image
+  upgrades.
+* Kept fallback images visible until sanitized host output loads and after
+  first-load errors.
+* Documented the source, manifest, adaptive artifact, and host artifact build
+  convention.
+* Fixed tag publishing to install Chromium for browser tests and detect
+  already-published versions without registry credentials.
+
+Details:
+link:changelog-details/2026-09-08-progressive-diagram-upgrades.adoc[Progressive
+diagram upgrades].
 
 == 0.1.0 — 2026-09-08
 

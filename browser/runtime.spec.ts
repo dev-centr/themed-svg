@@ -81,6 +81,63 @@ test('loads same-origin SVG and reflects state and events', async ({ page }) => 
   });
 });
 
+test('progressively upgrades marked images while retaining portable fallback behavior', async ({ page }) => {
+  await svgRoute(page, 'http://runtime.test/diagram.host.svg');
+  await page.route('http://runtime.test/broken.host.svg', (route) => route.fulfill({
+    status: 200,
+    contentType: 'text/html',
+    body: 'not svg',
+  }));
+
+  const result = await page.evaluate(async () => {
+    const runtime = (window as any).themedSvgRuntime;
+    document.body.innerHTML = `
+      <img id="portable" data-themed-svg src="/diagram.svg" alt="Portable diagram">
+      <img id="broken" data-themed-svg data-themed-svg-src="/broken.host.svg"
+        src="/broken.svg" alt="Broken host diagram">`;
+    const [upgraded, broken] = runtime.upgradeThemedSvgImages();
+    const portable = upgraded.querySelector('img');
+    const before = {
+      source: upgraded.getAttribute('src'),
+      fallbackConnected: portable?.isConnected,
+      fallbackParent: portable?.parentElement?.localName,
+    };
+    await new Promise((resolve) => upgraded.addEventListener('load', resolve, { once: true }));
+    upgraded.style.setProperty('--diagram-fill', '#00ff00');
+    const injected = upgraded.shadowRoot
+      .querySelector('[part="themed-svg-container"]').shadowRoot.querySelector('rect');
+    const loaded = {
+      fallbackHidden: upgraded.shadowRoot.querySelector('slot').hidden,
+      mountHidden: upgraded.shadowRoot.querySelector('[part="mount"]').hidden,
+      fill: getComputedStyle(injected).fill,
+    };
+    await new Promise((resolve) => broken.addEventListener('error', resolve, { once: true }));
+    const failed = {
+      fallbackHidden: broken.shadowRoot.querySelector('slot').hidden,
+      mountHidden: broken.shadowRoot.querySelector('[part="mount"]').hidden,
+      fallbackConnected: broken.querySelector('img')?.isConnected,
+    };
+    return { before, loaded, failed, count: runtime.upgradeThemedSvgImages().length };
+  });
+
+  expect(result.before).toEqual({
+    source: '/diagram.host.svg',
+    fallbackConnected: true,
+    fallbackParent: 'themed-svg',
+  });
+  expect(result.loaded).toEqual({
+    fallbackHidden: true,
+    mountHidden: false,
+    fill: 'rgb(0, 255, 0)',
+  });
+  expect(result.failed).toEqual({
+    fallbackHidden: false,
+    mountHidden: true,
+    fallbackConnected: true,
+  });
+  expect(result.count).toBe(0);
+});
+
 test('rejects cross-origin by default and permits explicit trusted origins', async ({ page }) => {
   let requests = 0;
   await page.route('http://assets.test/good.svg', (route) => {

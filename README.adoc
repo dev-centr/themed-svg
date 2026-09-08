@@ -154,17 +154,17 @@ registers `<themed-svg>`:
 ></themed-svg>
 ----
 
-After npm publication, a version-pinned CDN import can use:
+A version-pinned npm CDN import can use:
 
 [source,html]
 ----
 <script type="module"
-  src="https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.0/browser/themed-svg-element.js">
+  src="https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.1/browser/themed-svg-element.js">
 </script>
 ----
 
-Before publication, use a commit-pinned GitHub URL after that commit contains
-the generated bundle:
+For an unreleased commit, use a commit-pinned GitHub URL after that commit
+contains the generated bundle:
 
 [source,html]
 ----
@@ -201,6 +201,32 @@ The component supports `src`, `alt`, and `description`; `reload()` and
 `abort()`; `loading`, `loaded`, and `error` state attributes; and `load`,
 `error`, and `abort` events.
 
+=== Progressive external-image upgrade
+
+Keep documentation and third-party delivery portable by referencing a
+`standalone-adaptive` SVG as an ordinary image. Mark images that an owned site
+should upgrade after the runtime loads:
+
+[source,html]
+----
+<img data-themed-svg src="/diagrams/system.svg"
+  alt="System architecture">
+
+<script type="module">
+  import { upgradeThemedSvgImages } from '@dev-centr/themed-svg/register';
+  upgradeThemedSvgImages();
+</script>
+----
+
+The runtime derives `/diagrams/system.host.svg`, wraps the existing image, and
+only hides that fallback after the sanitized host SVG loads. A missing script,
+HTTP or MIME failure, rejected SVG, or unavailable host artifact leaves the
+adaptive image visible. Set `data-themed-svg-src` when the host artifact does
+not use the `.host.svg` sibling convention.
+
+`upgradeThemedSvgImage()` upgrades one image. `upgradeThemedSvgImages()` scans
+`img[data-themed-svg]` by default and safely ignores images already upgraded.
+
 == Output modes
 
 `host` (default)::
@@ -217,6 +243,33 @@ One concrete palette. Contains no `var()` references or theme media query.
 `paired-fixed`::
 Separate concrete light and dark SVG strings/files. Both contain no variables
 or media query.
+
+=== Reproducible dual-output convention
+
+Store the editable diagram, manifest, and both delivery artifacts together:
+
+----
+system.mmd
+system.theme.json
+system.svg
+system.host.svg
+----
+
+Render Mermaid once to a temporary SVG, then transform that same render into
+both committed outputs:
+
+[source,bash]
+----
+mmdc -i system.mmd -o .generated/system.raw.svg -c mermaid-config.json
+mermaid-svg-css-vars --manifest system.theme.json \
+  --mode standalone-adaptive .generated/system.raw.svg -o system.svg
+mermaid-svg-css-vars --manifest system.theme.json \
+  --mode host .generated/system.raw.svg -o system.host.svg
+----
+
+CI should repeat these commands and fail when either committed artifact differs.
+Fixed or paired-fixed exports may be retained for email, uploads, and consumers
+that cannot select adaptive or host output.
 
 If an SVG has no `viewBox`, the transformer derives one only from positive
 numeric `width` and `height` values. It does not invent dimensions. Missing

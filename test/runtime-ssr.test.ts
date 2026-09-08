@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import * as root from '../src/index.js';
 import {
   defineThemedSvgElement,
+  hostSvgSource,
   mountThemedSvg,
 } from '../src/runtime.js';
 
@@ -12,6 +13,13 @@ describe('runtime SSR and packaging', () => {
     assert.equal(root.defineThemedSvgElement, defineThemedSvgElement);
     assert.equal(root.mountThemedSvg, mountThemedSvg);
     assert.equal(defineThemedSvgElement(), undefined);
+  });
+
+  it('derives host artifact URLs without losing query strings or fragments', () => {
+    assert.equal(hostSvgSource('/diagrams/system.svg'), '/diagrams/system.host.svg');
+    assert.equal(hostSvgSource('./system.svg?v=2#view'), './system.host.svg?v=2#view');
+    assert.equal(hostSvgSource('./system.host.svg'), './system.host.svg');
+    assert.throws(() => hostSvgSource('./system.png'), /must end in \.svg/);
   });
 
   it('resolves the package root and runtime subpath under Node', async () => {

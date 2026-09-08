@@ -2024,6 +2024,49 @@ function mountThemedSvg(target, src, options = {}) {
     setAccessibility
   };
 }
+function hostSvgSource(source) {
+  const match = /^(.*?)(?:\.host)?\.svg([?#].*)?$/i.exec(source);
+  if (!match) {
+    throw runtimeError("invalid-url", "A fallback SVG source must end in .svg.");
+  }
+  return `${match[1]}.host.svg${match[2] ?? ""}`;
+}
+function upgradeThemedSvgImage(image, options = {}) {
+  if (image.dataset.themedSvgUpgraded === "true") {
+    const existing = image.parentElement;
+    if (existing?.localName === "themed-svg") return existing;
+    throw runtimeError("invalid-svg", "The image upgrade marker has no themed SVG parent.");
+  }
+  const parent = image.parentNode;
+  if (!parent) throw runtimeError("invalid-svg", "The fallback image must be connected to a parent.");
+  defineThemedSvgElement();
+  const source = image.getAttribute("src");
+  if (!source && options.hostSrc === void 0) {
+    throw runtimeError("invalid-url", "The fallback image requires a src attribute.");
+  }
+  const element = image.ownerDocument.createElement("themed-svg");
+  element.setAttribute("src", String(options.hostSrc ?? hostSvgSource(source)));
+  element.setAttribute("alt", image.getAttribute("alt") ?? "");
+  const description = options.description ?? image.dataset.themedSvgDescription;
+  if (description !== void 0) element.setAttribute("description", description);
+  element.setAttribute("data-themed-svg-upgrade", "");
+  const next = image.nextSibling;
+  image.dataset.themedSvgUpgraded = "true";
+  element.append(image);
+  parent.insertBefore(element, next);
+  return element;
+}
+function upgradeThemedSvgImages(root, options = {}) {
+  const scope = root ?? globalThis.document;
+  if (!scope) return [];
+  const selector = options.selector ?? "img[data-themed-svg]";
+  const sourceAttribute = options.sourceAttribute ?? "data-themed-svg-src";
+  const descriptionAttribute = options.descriptionAttribute ?? "data-themed-svg-description";
+  return Array.from(scope.querySelectorAll(selector)).filter((image) => image.dataset.themedSvgUpgraded !== "true").map((image) => upgradeThemedSvgImage(image, {
+    ...image.getAttribute(sourceAttribute) ? { hostSrc: image.getAttribute(sourceAttribute) } : {},
+    ...image.getAttribute(descriptionAttribute) ? { description: image.getAttribute(descriptionAttribute) } : {}
+  }));
+}
 function eventDetail(error) {
   return Object.freeze({
     code: error.code,
@@ -2048,12 +2091,18 @@ function defineThemedSvgElement(options = {}) {
     }
     mount;
     mountTarget;
+    fallbackSlot;
+    hasLoaded = false;
     constructor() {
       super();
       const root = this.attachShadow({ mode: "open" });
+      const style = this.ownerDocument.createElement("style");
+      style.textContent = ':host{display:inline-block;max-width:100%;vertical-align:middle}[part="mount"]{display:block}[part="mount"] span,[part="mount"] svg{display:block;max-width:100%}';
+      this.fallbackSlot = this.ownerDocument.createElement("slot");
       this.mountTarget = this.ownerDocument.createElement("span");
       this.mountTarget.setAttribute("part", "mount");
-      root.append(this.mountTarget);
+      this.mountTarget.hidden = true;
+      root.append(style, this.fallbackSlot, this.mountTarget);
     }
     connectedCallback() {
       if (this.mount) {
@@ -2105,6 +2154,22 @@ function defineThemedSvgElement(options = {}) {
       for (const value of ["loading", "loaded", "error"]) {
         this.toggleAttribute(value, value === state);
       }
+      if (state === "loading" && !this.hasLoaded) {
+        this.fallbackSlot.hidden = false;
+        this.mountTarget.hidden = true;
+      } else if (state === "loaded") {
+        const fallback = this.querySelector("img");
+        if (fallback && !this.style.width) {
+          const width = fallback.getBoundingClientRect().width;
+          if (width > 0) this.style.width = `${width}px`;
+        }
+        this.hasLoaded = true;
+        this.fallbackSlot.hidden = true;
+        this.mountTarget.hidden = false;
+      } else if (state === "error" && !this.hasLoaded) {
+        this.fallbackSlot.hidden = false;
+        this.mountTarget.hidden = true;
+      }
     }
     emit(name, detail) {
       const EventConstructor = this.ownerDocument.defaultView?.CustomEvent;
@@ -2152,7 +2217,10 @@ defineThemedSvgElement();
 export {
   ThemedSvgRuntimeError,
   defineThemedSvgElement,
-  mountThemedSvg
+  hostSvgSource,
+  mountThemedSvg,
+  upgradeThemedSvgImage,
+  upgradeThemedSvgImages
 };
 /*! Bundled license information:
 

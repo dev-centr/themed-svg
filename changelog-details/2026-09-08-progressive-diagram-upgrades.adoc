@@ -1,0 +1,21 @@
+= Progressive diagram upgrades
+:page-audience: Documentation and web application authors
+:page-usage-context: release detail
+:page-orig-author: Auto on behalf of Ryan Johnson
+:page-last-author: Auto on behalf of Ryan Johnson
+
+Documentation can now keep a self-contained adaptive SVG in an ordinary
+`<img>` while an owned site progressively upgrades it to sanitized host output.
+The original image remains the no-JavaScript, direct-viewing, third-party, and
+first-load-error fallback.
+
+`upgradeThemedSvgImage()` wraps one image in `<themed-svg>`.
+`upgradeThemedSvgImages()` scans marked images and derives a `.host.svg`
+sibling unless the markup supplies an explicit host source. The component
+shows its fallback slot while loading, switches atomically after success, and
+retains the last valid injected diagram during later reload failures.
+
+The documented artifact convention stores editable Mermaid source, a Themed
+SVG manifest, a standalone-adaptive `.svg`, and a runtime `.host.svg` together.
+Both delivery artifacts come from the same Mermaid render and are suitable for
+generated-file freshness checks in CI.
