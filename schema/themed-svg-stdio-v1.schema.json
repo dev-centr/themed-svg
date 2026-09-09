@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.devcentr.org/themed-svg/schemas/themed-svg-stdio-v1.schema.json",
+  "title": "Themed SVG stdio protocol, version 1",
+  "description": "Request and response envelopes for native editor integration. JSON mode carries one envelope; JSONL mode carries one envelope per line.",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/response" }
+  ],
+  "$defs": {
+    "id": {
+      "type": ["string", "number", "null"]
+    },
+    "baseRequest": {
+      "type": "object",
+      "required": ["protocolVersion", "operation"],
+      "properties": {
+        "protocolVersion": { "const": 1 },
+        "id": { "$ref": "#/$defs/id" },
+        "operation": {
+          "enum": ["inspect", "validate", "transform", "sanitize", "export"]
+        }
+      }
+    },
+    "request": {
+      "oneOf": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseRequest" },
+            {
+              "required": ["svg"],
+              "properties": {
+                "operation": { "const": "inspect" },
+                "svg": { "type": "string" }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseRequest" },
+            {
+              "anyOf": [
+                { "required": ["svg"] },
+                { "required": ["manifest"] }
+              ],
+              "properties": {
+                "operation": { "const": "validate" },
+                "svg": { "type": "string" },
+                "manifest": { "$ref": "themed-svg-manifest-v1.schema.json" }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseRequest" },
+            {
+              "required": ["svg", "manifest"],
+              "properties": {
+                "operation": { "const": "transform" },
+                "svg": { "type": "string" },
+                "manifest": { "$ref": "themed-svg-manifest-v1.schema.json" },
+                "options": { "$ref": "#/$defs/transformOptions" }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseRequest" },
+            {
+              "required": ["svg"],
+              "properties": {
+                "operation": { "const": "sanitize" },
+                "svg": { "type": "string" }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseRequest" },
+            {
+              "required": ["svg", "manifest"],
+              "properties": {
+                "operation": { "const": "export" },
+                "svg": { "type": "string" },
+                "manifest": { "$ref": "themed-svg-manifest-v1.schema.json" },
+                "options": {
+                  "allOf": [
+                    { "$ref": "#/$defs/commonOptions" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "modes": {
+                          "type": "array",
+                          "uniqueItems": true,
+                          "items": {
+                            "enum": ["standalone-adaptive", "host", "fixed", "paired-fixed"]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "unevaluatedProperties": false
+                }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        }
+      ]
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "role": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "commonOptions": {
+      "type": "object",
+      "properties": {
+        "preset": { "type": "string" },
+        "palette": { "$ref": "#/$defs/palette" },
+        "lightPalette": { "$ref": "#/$defs/palette" },
+        "darkPalette": { "$ref": "#/$defs/palette" },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    },
+    "transformOptions": {
+      "allOf": [
+        { "$ref": "#/$defs/commonOptions" },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": ["standalone-adaptive", "host", "fixed", "paired-fixed"]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["warning", "error"] },
+        "message": { "type": "string" },
+        "bindingIndex": { "type": "integer", "minimum": 0 },
+        "selector": { "type": "string" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "enum": ["svg", "manifest", "palette", "request"] },
+            "path": { "type": "string" },
+            "line": { "type": "integer", "minimum": 1 },
+            "column": { "type": "integer", "minimum": 1 },
+            "excerpt": { "type": "string" }
+          }
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolVersion", "ok", "diagnostics"],
+      "properties": {
+        "protocolVersion": { "const": 1 },
+        "id": { "$ref": "#/$defs/id" },
+        "operation": {
+          "enum": ["inspect", "validate", "transform", "sanitize", "export"]
+        },
+        "ok": { "type": "boolean" },
+        "result": true,
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnostic" }
+        }
+      }
+    }
+  }
+}

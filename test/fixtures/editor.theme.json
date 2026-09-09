@@ -1,0 +1,38 @@
+{
+  "$schema": "../../schema/themed-svg-manifest-v1.schema.json",
+  "schemaVersion": 1,
+  "namespace": "editor-fixture",
+  "source": {
+    "kind": "fixture",
+    "uri": "editor.svg"
+  },
+  "tokens": [
+    { "id": "color.surface.primary" },
+    { "id": "color.border.primary" }
+  ],
+  "defaultPreset": "light",
+  "presets": {
+    "light": {
+      "color.surface.primary": "#eeeeee",
+      "color.border.primary": "#333333"
+    },
+    "dark": {
+      "color.surface.primary": "#222222",
+      "color.border.primary": "#cccccc"
+    }
+  },
+  "bindings": [
+    {
+      "kind": "presentation",
+      "selector": "#surface",
+      "attribute": "fill",
+      "token": "color.surface.primary"
+    },
+    {
+      "kind": "stylesheet",
+      "selector": ".edge",
+      "property": "stroke",
+      "token": "color.border.primary"
+    }
+  ]
+}

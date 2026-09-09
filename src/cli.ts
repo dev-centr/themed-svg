@@ -1,5 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join } from 'node:path';
+import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
+import { processStdioRequest, STDIO_PROTOCOL_VERSION } from './protocol.js';
 import { transformSvg } from './transform.js';
 import type { OutputMode, Palette, ThemedSvgManifest, TransformOptions } from './types.js';
 
@@ -16,6 +19,7 @@ interface Arguments {
   darkOutput?: string;
   help: boolean;
   version: boolean;
+  stdio?: 'json' | 'jsonl';
 }
 
 function help(): void {
@@ -33,6 +37,7 @@ Options:
   --dark-palette <file>       Runtime dark-mode JSON palette
   --light-output <file>       paired-fixed light output path
   --dark-output <file>        paired-fixed dark output path
+  --stdio <json|jsonl>        Version 1 editor protocol over stdin/stdout
   -v, --version               Show package version
   -h, --help                  Show help
 
@@ -67,6 +72,7 @@ function parse(argv: string[]): Arguments {
       case '--dark-palette': result.darkPalette = value(); break;
       case '--light-output': result.lightOutput = value(); break;
       case '--dark-output': result.darkOutput = value(); break;
+      case '--stdio': result.stdio = value() as 'json' | 'jsonl'; break;
       default:
         if (argument.startsWith('-')) throw new Error(`Unknown option: ${argument}`);
         positional.push(argument);
@@ -86,11 +92,72 @@ function readPalette(path: string | undefined): Palette | undefined {
   return path ? JSON.parse(readFileSync(path, 'utf8')) as Palette : undefined;
 }
 
+function packageVersion(): string {
+  const packagePath = fileURLToPath(new URL('../../package.json', import.meta.url));
+  return (JSON.parse(readFileSync(packagePath, 'utf8')) as { version: string }).version;
+}
+
+function invalidJsonResponse(message: string): object {
+  return {
+    protocolVersion: STDIO_PROTOCOL_VERSION,
+    ok: false,
+    diagnostics: [{
+      code: 'invalid-request',
+      severity: 'error',
+      message,
+      source: { kind: 'request' },
+    }],
+  };
+}
+
+function runStdio(format: 'json' | 'jsonl'): number {
+  const source = readFileSync(0, 'utf8');
+  if (format === 'json') {
+    try {
+      process.stdout.write(`${JSON.stringify(processStdioRequest(JSON.parse(source)))}\n`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stdout.write(`${JSON.stringify(invalidJsonResponse(`Invalid JSON: ${message}`))}\n`);
+    }
+    return 0;
+  }
+  for (const line of source.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      process.stdout.write(`${JSON.stringify(processStdioRequest(JSON.parse(line)))}\n`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stdout.write(`${JSON.stringify(invalidJsonResponse(`Invalid JSONL record: ${message}`))}\n`);
+    }
+  }
+  return 0;
+}
+
+async function runJsonlStream(): Promise<number> {
+  const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
+  for await (const line of lines) {
+    if (!line.trim()) continue;
+    try {
+      process.stdout.write(`${JSON.stringify(processStdioRequest(JSON.parse(line)))}\n`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stdout.write(`${JSON.stringify(invalidJsonResponse(`Invalid JSONL record: ${message}`))}\n`);
+    }
+  }
+  return 0;
+}
+
 export function runCli(argv = process.argv.slice(2)): number {
   const args = parse(argv);
   if (args.version) {
-    process.stdout.write('0.1.0\n');
+    process.stdout.write(`${packageVersion()}\n`);
     return 0;
+  }
+  if (args.stdio) {
+    if (args.stdio !== 'json' && args.stdio !== 'jsonl') {
+      throw new Error('--stdio must be json or jsonl');
+    }
+    return runStdio(args.stdio);
   }
   if (args.help || !args.input || !args.manifest) {
     help();
@@ -128,4 +195,10 @@ export function runCli(argv = process.argv.slice(2)): number {
     process.stdout.write(result.svg!);
   }
   return 0;
+}
+
+export async function runCliAsync(argv = process.argv.slice(2)): Promise<number> {
+  const args = parse(argv);
+  if (args.stdio === 'jsonl') return await runJsonlStream();
+  return runCli(argv);
 }

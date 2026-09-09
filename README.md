@@ -67,7 +67,7 @@ outputs, or its stricter runtime contract are also needed.
 
 The self-contained registration bundle is available at
 `browser/themed-svg-element.js` and from the version-pinned npm CDN URL
-`https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.1/browser/themed-svg-element.js`;
+`https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.2.0/browser/themed-svg-element.js`;
 unreleased commits can use
 `https://cdn.jsdelivr.net/gh/dev-centr/themed-svg@COMMIT/browser/themed-svg-element.js`.
 The explicit APIs are exported from `@dev-centr/themed-svg/runtime`.
@@ -86,6 +86,13 @@ bound attributes or CSS declarations. Literal color discovery is diagnostics
 and migration assistance, never an implicit rewrite strategy. A missing
 `viewBox` is derived only from positive numeric width and height; otherwise the
 transform returns an error and no output.
+
+Native editors can run `themed-svg-stdio` for the version 1 streaming JSONL
+protocol, or `themed-svg --stdio json` for one request. Operations inspect,
+validate, transform, fail-closed sanitize, and deterministically export
+adaptive, host, fixed, light, and dark artifacts. TypeScript protocol APIs are
+available from `@dev-centr/themed-svg/protocol`; its JSON Schema is exported
+from `@dev-centr/themed-svg/schema/stdio-v1`.
 
 Mermaid is one possible downstream consumer. The standard and package are
 diagram-generator neutral.

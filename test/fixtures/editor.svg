@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20">
+  <style>.edge { stroke: #333333; }</style>
+  <rect id="surface" width="40" height="20" fill="#eeeeee"/>
+  <path class="edge" d="M0 0L40 20"/>
+</svg>

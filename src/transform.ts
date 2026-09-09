@@ -6,11 +6,17 @@ import { SaxesParser } from 'saxes';
 import { bundledPresets } from './presets.js';
 import type {
   Diagnostic,
+  ExportArtifactOptions,
+  ExportArtifactsResult,
   LiteralColorOccurrence,
   OutputMode,
   Palette,
   PaletteMode,
   SvgBinding,
+  SvgInspection,
+  SvgInspectionResult,
+  SvgSanitizeResult,
+  SvgValidationResult,
   ThemedSvgManifest,
   TransformOptions,
   TransformResult,
@@ -58,6 +64,7 @@ export function validateManifest(manifest: ThemedSvgManifest): Diagnostic[] {
       code: 'invalid-manifest',
       severity: 'error',
       message: 'Unsupported manifest schemaVersion; expected 1.',
+      source: { kind: 'manifest', path: '/schemaVersion' },
     });
   }
   if (!/^[a-z][a-z0-9-]*$/.test(manifest.namespace ?? '')) {
@@ -65,6 +72,7 @@ export function validateManifest(manifest: ThemedSvgManifest): Diagnostic[] {
       code: 'invalid-manifest',
       severity: 'error',
       message: 'Manifest namespace must be kebab-case.',
+      source: { kind: 'manifest', path: '/namespace' },
     });
   }
   const ids = new Set<string>();
@@ -74,6 +82,7 @@ export function validateManifest(manifest: ThemedSvgManifest): Diagnostic[] {
         code: 'invalid-manifest',
         severity: 'error',
         message: `Invalid semantic token ID: ${token.id}`,
+        source: { kind: 'manifest', path: `/tokens/${manifest.tokens.indexOf(token)}/id` },
       });
     }
     if (ids.has(token.id)) {
@@ -81,6 +90,7 @@ export function validateManifest(manifest: ThemedSvgManifest): Diagnostic[] {
         code: 'invalid-manifest',
         severity: 'error',
         message: `Duplicate semantic token ID: ${token.id}`,
+        source: { kind: 'manifest', path: `/tokens/${manifest.tokens.indexOf(token)}/id` },
       });
     }
     ids.add(token.id);
@@ -90,6 +100,7 @@ export function validateManifest(manifest: ThemedSvgManifest): Diagnostic[] {
       code: 'invalid-manifest',
       severity: 'error',
       message: `Default preset "${manifest.defaultPreset}" does not exist.`,
+      source: { kind: 'manifest', path: '/defaultPreset' },
     });
   }
   for (const [index, binding] of (manifest.bindings ?? []).entries()) {
@@ -99,10 +110,29 @@ export function validateManifest(manifest: ThemedSvgManifest): Diagnostic[] {
         severity: 'error',
         message: `Binding ${index} refers to undeclared token "${binding.token}".`,
         bindingIndex: index,
+        selector: binding.selector,
+        source: { kind: 'manifest', path: `/bindings/${index}/token` },
       });
     }
   }
+  for (const [name, palette] of Object.entries(manifest.presets ?? {})) {
+    diagnostics.push(
+      ...validatePalette(palette, `manifest preset "${name}"`, `/presets/${jsonPointer(name)}`)
+    );
+  }
+  for (const mode of ['light', 'dark'] as const) {
+    const palette = manifest.paletteOverrides?.[mode];
+    if (palette) {
+      diagnostics.push(
+        ...validatePalette(palette, `manifest ${mode} override`, `/paletteOverrides/${mode}`)
+      );
+    }
+  }
   return diagnostics;
+}
+
+function jsonPointer(value: string): string {
+  return value.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
 function validateXml(svg: string): Diagnostic[] {
@@ -113,10 +143,16 @@ function validateXml(svg: string): Diagnostic[] {
       code: 'unsafe-construct',
       severity: 'error',
       message: 'DOCTYPE declarations are forbidden.',
+      source: { kind: 'svg', line: parser.line + 1, column: parser.column + 1 },
     });
   });
   parser.on('error', (error: Error) => {
-    diagnostics.push({ code: 'invalid-svg', severity: 'error', message: error.message });
+    diagnostics.push({
+      code: 'invalid-svg',
+      severity: 'error',
+      message: error.message,
+      source: { kind: 'svg', line: parser.line + 1, column: parser.column + 1 },
+    });
   });
   try {
     parser.write(svg).close();
@@ -125,6 +161,7 @@ function validateXml(svg: string): Diagnostic[] {
       code: 'invalid-svg',
       severity: 'error',
       message: error instanceof Error ? error.message : String(error),
+      source: { kind: 'svg', line: parser.line + 1, column: parser.column + 1 },
     });
   }
   return diagnostics;
@@ -262,7 +299,7 @@ function safetyDiagnostics(document: XmlDocument): Diagnostic[] {
   return diagnostics;
 }
 
-function validatePalette(palette: Palette, context: string): Diagnostic[] {
+function validatePalette(palette: Palette, context: string, path?: string): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const [token, rawValue] of Object.entries(palette)) {
     const value = rawValue.trim();
@@ -278,6 +315,10 @@ function validatePalette(palette: Palette, context: string): Diagnostic[] {
         code: 'invalid-palette',
         severity: 'error',
         message: `Palette value for "${token}" in ${context} is not a concrete CSS color.`,
+        source: {
+          kind: 'palette',
+          ...(path ? { path: `${path}/${jsonPointer(token)}` } : {}),
+        },
       });
       continue;
     }
@@ -394,6 +435,8 @@ function applyBindings(
         severity: manifest.fallback?.unresolvedToken === 'preserve' ? 'warning' : 'error',
         message: `No value resolved for token "${binding.token}".`,
         bindingIndex,
+        selector: binding.selector,
+        source: { kind: 'manifest', path: `/bindings/${bindingIndex}/token` },
       });
       return;
     }
@@ -405,6 +448,8 @@ function applyBindings(
         severity: 'warning',
         message: `Binding ${bindingIndex} collides with binding ${previous}; later binding wins.`,
         bindingIndex,
+        selector: binding.selector,
+        source: { kind: 'manifest', path: `/bindings/${bindingIndex}` },
       });
     }
     targets.set(key, bindingIndex);
@@ -416,6 +461,8 @@ function applyBindings(
           severity: 'error',
           message: `Unsupported style element selector "${binding.styleSelector}".`,
           bindingIndex,
+          selector: binding.styleSelector,
+          source: { kind: 'manifest', path: `/bindings/${bindingIndex}/styleSelector` },
         });
         return;
       }
@@ -428,6 +475,8 @@ function applyBindings(
             ? `Stylesheet selector "${binding.selector}" has no "${binding.property}" declaration.`
             : `Stylesheet selector "${binding.selector}" was not found.`,
           bindingIndex,
+          selector: binding.selector,
+          source: { kind: 'manifest', path: `/bindings/${bindingIndex}/selector` },
         });
       }
       return;
@@ -439,6 +488,8 @@ function applyBindings(
         severity: 'error',
         message: `Unsupported element selector "${binding.selector}".`,
         bindingIndex,
+        selector: binding.selector,
+        source: { kind: 'manifest', path: `/bindings/${bindingIndex}/selector` },
       });
       return;
     }
@@ -449,6 +500,8 @@ function applyBindings(
         severity: manifest.fallback?.missingTarget === 'error' ? 'error' : 'warning',
         message: `Selector "${binding.selector}" was not found.`,
         bindingIndex,
+        selector: binding.selector,
+        source: { kind: 'manifest', path: `/bindings/${bindingIndex}/selector` },
       });
       return;
     }
@@ -460,6 +513,8 @@ function applyBindings(
             severity: manifest.fallback?.missingTarget === 'error' ? 'error' : 'warning',
             message: `Selector "${binding.selector}" has no inline "${binding.property}" declaration.`,
             bindingIndex,
+            selector: binding.selector,
+            source: { kind: 'manifest', path: `/bindings/${bindingIndex}/property` },
           });
         }
       } else {
@@ -603,12 +658,9 @@ export function transformSvg(
   return transformOne(svg, manifest, mode, preset, paletteMode, options);
 }
 
-/** Migration and diagnostics helper only. It never changes SVG content. */
-export function discoverLiteralColors(svg: string): LiteralColorOccurrence[] {
-  const parsed = parseSvg(svg);
-  if (!parsed.document) return [];
+function literalColors(document: XmlDocument): LiteralColorOccurrence[] {
   const occurrences: LiteralColorOccurrence[] = [];
-  for (const element of elements(parsed.document.documentElement)) {
+  for (const element of elements(document.documentElement)) {
     const selector = element.getAttribute('id')
       ? `#${element.getAttribute('id')}`
       : String(element.tagName);
@@ -635,4 +687,93 @@ export function discoverLiteralColors(svg: string): LiteralColorOccurrence[] {
     }
   }
   return occurrences;
+}
+
+/** Migration and diagnostics helper only. It never changes SVG content. */
+export function discoverLiteralColors(svg: string): LiteralColorOccurrence[] {
+  const parsed = parseSvg(svg);
+  return parsed.document ? literalColors(parsed.document) : [];
+}
+
+export function validateSvg(svg: string): SvgValidationResult {
+  const parsed = parseSvg(svg);
+  if (parsed.document && !parsed.diagnostics.some(({ severity }) => severity === 'error')) {
+    ensureGeometry(parsed.document, parsed.diagnostics);
+  }
+  return { diagnostics: parsed.diagnostics };
+}
+
+/**
+ * Fail-closed sanitizer for build and editor inputs. Safe documents are
+ * canonically parsed and serialized; unsafe documents produce no SVG.
+ */
+export function sanitizeSvg(svg: string): SvgSanitizeResult {
+  const parsed = parseSvg(svg);
+  if (!parsed.document || parsed.diagnostics.some(({ severity }) => severity === 'error')) {
+    return { diagnostics: parsed.diagnostics };
+  }
+  return {
+    svg: new XMLSerializer().serializeToString(parsed.document),
+    diagnostics: parsed.diagnostics,
+  };
+}
+
+export function inspectSvg(svg: string): SvgInspectionResult {
+  const parsed = parseSvg(svg);
+  if (!parsed.document || parsed.diagnostics.some(({ severity }) => severity === 'error')) {
+    return { diagnostics: parsed.diagnostics };
+  }
+  const root = parsed.document.documentElement;
+  const allElements = elements(root);
+  const rootAttributes: SvgInspection['root'] = {};
+  for (const name of ['viewBox', 'width', 'height', 'preserveAspectRatio'] as const) {
+    if (root.hasAttribute(name)) rootAttributes[name] = root.getAttribute(name);
+  }
+  return {
+    inspection: {
+      root: rootAttributes,
+      elementCount: allElements.length,
+      ids: allElements
+        .filter((element) => element.hasAttribute('id'))
+        .map((element) => element.getAttribute('id') as string)
+        .sort(),
+      stylesheetCount: allElements.filter(
+        (element) => String(element.tagName).toLowerCase() === 'style'
+      ).length,
+      literalColors: literalColors(parsed.document),
+    },
+    diagnostics: parsed.diagnostics,
+  };
+}
+
+export function exportSvgArtifacts(
+  svg: string,
+  manifest: ThemedSvgManifest,
+  options: ExportArtifactOptions = {}
+): ExportArtifactsResult {
+  const {
+    modes = [
+    'standalone-adaptive',
+    'host',
+    'fixed',
+    'paired-fixed',
+    ],
+    ...transformOptions
+  } = options;
+  const result: ExportArtifactsResult = { artifacts: {}, diagnostics: [] };
+  for (const mode of modes) {
+    const transformed = transformSvg(svg, manifest, { ...transformOptions, mode });
+    result.diagnostics.push(...transformed.diagnostics);
+    if (mode === 'standalone-adaptive' && transformed.svg) {
+      result.artifacts.standaloneAdaptive = transformed.svg;
+    } else if (mode === 'host' && transformed.svg) {
+      result.artifacts.host = transformed.svg;
+    } else if (mode === 'fixed' && transformed.svg) {
+      result.artifacts.fixed = transformed.svg;
+    } else if (mode === 'paired-fixed') {
+      if (transformed.lightSvg) result.artifacts.light = transformed.lightSvg;
+      if (transformed.darkSvg) result.artifacts.dark = transformed.darkSvg;
+    }
+  }
+  return result;
 }

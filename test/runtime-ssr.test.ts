@@ -22,20 +22,22 @@ describe('runtime SSR and packaging', () => {
     assert.throws(() => hostSvgSource('./system.png'), /must end in \.svg/);
   });
 
-  it('resolves the package root and runtime subpath under Node', async () => {
+  it('resolves the package root, runtime, and protocol subpaths under Node', async () => {
     const importPackage = Function(
       'specifier',
       'return import(specifier)'
     ) as (specifier: string) => Promise<Record<string, unknown>>;
-    const [packageRoot, packageRuntime] = await Promise.all([
+    const [packageRoot, packageRuntime, packageProtocol] = await Promise.all([
       importPackage('@dev-centr/themed-svg'),
       importPackage('@dev-centr/themed-svg/runtime'),
+      importPackage('@dev-centr/themed-svg/protocol'),
     ]);
     assert.equal(packageRoot.mountThemedSvg, packageRuntime.mountThemedSvg);
     assert.equal(
       (packageRuntime.defineThemedSvgElement as typeof defineThemedSvgElement)(),
       undefined
     );
+    assert.equal(packageRoot.processStdioRequest, packageProtocol.processStdioRequest);
   });
 
   it('builds a self-contained auto-registration ESM bundle', () => {

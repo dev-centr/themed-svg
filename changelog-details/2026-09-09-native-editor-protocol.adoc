@@ -1,0 +1,20 @@
+= Native editor protocol
+:page-audience: Native editor and integration authors
+:page-usage-context: release detail
+:page-orig-author: Auto on behalf of Ryan Johnson
+:page-last-author: Auto on behalf of Ryan Johnson
+
+Native applications can now invoke Themed SVG through a stable version 1
+stdio contract. Single-request JSON supports short jobs, while streaming JSONL
+keeps one process alive and correlates each response with the caller's request
+ID.
+
+The protocol exposes inspection, SVG and manifest validation, canonical
+transformation, fail-closed sanitation, and deterministic multi-artifact
+export. These operations call the package transformer and its XML/CSS parser;
+they do not maintain a second interpretation of SVG bindings or safety rules.
+
+Diagnostics now carry selector, binding, JSON Pointer, and XML location context
+where the underlying parser can provide it. A published JSON Schema and
+TypeScript request and response types make the wire contract independently
+testable by editor implementations.

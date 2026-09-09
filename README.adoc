@@ -159,7 +159,7 @@ A version-pinned npm CDN import can use:
 [source,html]
 ----
 <script type="module"
-  src="https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.1.1/browser/themed-svg-element.js">
+  src="https://cdn.jsdelivr.net/npm/@dev-centr/themed-svg@0.2.0/browser/themed-svg-element.js">
 </script>
 ----
 
@@ -354,6 +354,63 @@ themed-svg --manifest diagram.theme.json \
 
 Run `themed-svg --help` for all options. Diagnostics go to stderr. Exit code 2
 means the transform reported an error and did not emit output.
+
+=== Native editor stdio protocol
+
+Native editors can use the stable version 1 JSON or JSONL protocol without
+writing temporary files. `themed-svg-stdio` defaults to JSONL and remains open,
+writing one response for each input line:
+
+[source,bash]
+----
+themed-svg-stdio
+# Equivalent:
+themed-svg --stdio jsonl
+----
+
+Every request contains `protocolVersion: 1`, an optional string, number, or
+null `id`, and one of these operations:
+
+`inspect`::
+Returns root geometry, element and stylesheet counts, sorted IDs, and literal
+color occurrences.
+
+`validate`::
+Validates an SVG, a version 1 manifest, or their bindings together when both
+are supplied.
+
+`transform`::
+Runs one canonical transform with the same options as `transformSvg()`.
+
+`sanitize`::
+Fail-closed validation plus canonical XML serialization. Unsafe input is
+rejected and produces no SVG rather than being partially repaired.
+
+`export`::
+Produces deterministic `standaloneAdaptive`, `host`, `fixed`, `light`, and
+`dark` artifact strings by default. Restrict work with `options.modes`.
+
+[source,json]
+----
+{"protocolVersion":1,"id":"preview-42","operation":"export","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"20\">...</svg>","manifest":{"schemaVersion":1,"namespace":"preview","tokens":[],"defaultPreset":"light","presets":{"light":{},"dark":{}},"bindings":[]},"options":{"modes":["standalone-adaptive","host"]}}
+----
+
+Responses echo `protocolVersion`, `id`, and `operation`, then provide `ok`,
+`result`, and `diagnostics`. Diagnostics can include `bindingIndex`, `selector`,
+and source context (`kind`, JSON Pointer `path`, line, and column). Request
+errors are protocol responses, so JSONL processing continues. Process failure
+is reserved for CLI or stream failure.
+
+For a single request followed by process exit, use:
+
+[source,bash]
+----
+themed-svg --stdio json < request.json > response.json
+----
+
+The TypeScript envelopes and `processStdioRequest()` are available from
+`@dev-centr/themed-svg/protocol`. The protocol schema is exported as
+`@dev-centr/themed-svg/schema/stdio-v1`.
 
 == Safety and structural processing
 

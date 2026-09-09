@@ -97,12 +97,16 @@ test('progressively upgrades marked images while retaining portable fallback beh
         src="/broken.svg" alt="Broken host diagram">`;
     const [upgraded, broken] = runtime.upgradeThemedSvgImages();
     const portable = upgraded.querySelector('img');
+    const loadedEvent = new Promise((resolve) =>
+      upgraded.addEventListener('load', resolve, { once: true }));
+    const errorEvent = new Promise((resolve) =>
+      broken.addEventListener('error', resolve, { once: true }));
     const before = {
       source: upgraded.getAttribute('src'),
       fallbackConnected: portable?.isConnected,
       fallbackParent: portable?.parentElement?.localName,
     };
-    await new Promise((resolve) => upgraded.addEventListener('load', resolve, { once: true }));
+    await loadedEvent;
     upgraded.style.setProperty('--diagram-fill', '#00ff00');
     const injected = upgraded.shadowRoot
       .querySelector('[part="themed-svg-container"]').shadowRoot.querySelector('rect');
@@ -111,7 +115,7 @@ test('progressively upgrades marked images while retaining portable fallback beh
       mountHidden: upgraded.shadowRoot.querySelector('[part="mount"]').hidden,
       fill: getComputedStyle(injected).fill,
     };
-    await new Promise((resolve) => broken.addEventListener('error', resolve, { once: true }));
+    await errorEvent;
     const failed = {
       fallbackHidden: broken.shadowRoot.querySelector('slot').hidden,
       mountHidden: broken.shadowRoot.querySelector('[part="mount"]').hidden,

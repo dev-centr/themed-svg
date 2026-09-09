@@ -2,7 +2,18 @@
 
 This timeline records user-visible changes to `@dev-centr/themed-svg`.
 
-== Unreleased
+== 0.2.0 — 2026-09-09
+
+* Added a versioned JSON and streaming JSONL stdio protocol for native editors.
+* Added inspect, validate, transform, fail-closed sanitize, and deterministic
+  multi-artifact export operations backed by the canonical transformer.
+* Added selector, binding, request-path, and XML location context to diagnostics
+  where available.
+* Published protocol TypeScript APIs and JSON Schema package exports.
+
+Details:
+link:changelog-details/2026-09-09-native-editor-protocol.adoc[Native editor
+protocol].
 
 == 0.1.1 — 2026-09-08
 

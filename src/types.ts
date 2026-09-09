@@ -68,6 +68,7 @@ export type SvgBinding =
   | GradientStopBinding;
 
 export interface ThemedSvgManifest {
+  $schema?: string;
   schemaVersion: 1;
   namespace: string;
   source?: SourceProvenance;
@@ -100,6 +101,7 @@ export type DiagnosticCode =
   | 'unsafe-construct'
   | 'unsupported-construct'
   | 'invalid-palette'
+  | 'invalid-request'
   | 'missing-selector'
   | 'missing-property'
   | 'missing-viewbox'
@@ -113,6 +115,16 @@ export interface Diagnostic {
   severity: 'warning' | 'error';
   message: string;
   bindingIndex?: number;
+  selector?: string;
+  source?: DiagnosticSource;
+}
+
+export interface DiagnosticSource {
+  kind: 'svg' | 'manifest' | 'palette' | 'request';
+  path?: string;
+  line?: number;
+  column?: number;
+  excerpt?: string;
 }
 
 export interface TransformResult {
@@ -126,4 +138,55 @@ export interface LiteralColorOccurrence {
   value: string;
   selector: string;
   property: string;
+}
+
+export interface SvgInspection {
+  root: {
+    viewBox?: string;
+    width?: string;
+    height?: string;
+    preserveAspectRatio?: string;
+  };
+  elementCount: number;
+  ids: string[];
+  stylesheetCount: number;
+  literalColors: LiteralColorOccurrence[];
+}
+
+export interface SvgInspectionResult {
+  inspection?: SvgInspection;
+  diagnostics: Diagnostic[];
+}
+
+export interface SvgValidationResult {
+  diagnostics: Diagnostic[];
+}
+
+export interface SvgSanitizeResult {
+  svg?: string;
+  diagnostics: Diagnostic[];
+}
+
+export type ExportArtifactMode =
+  | 'standalone-adaptive'
+  | 'host'
+  | 'fixed'
+  | 'paired-fixed';
+
+export interface ExportArtifactOptions
+  extends Omit<TransformOptions, 'mode'> {
+  modes?: ExportArtifactMode[];
+}
+
+export interface ExportArtifacts {
+  standaloneAdaptive?: string;
+  host?: string;
+  fixed?: string;
+  light?: string;
+  dark?: string;
+}
+
+export interface ExportArtifactsResult {
+  artifacts: ExportArtifacts;
+  diagnostics: Diagnostic[];
 }

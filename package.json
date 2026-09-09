@@ -1,6 +1,6 @@
 {
   "name": "@dev-centr/themed-svg",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A semantic light/dark theming standard and structural transformer for web SVG diagrams.",
   "type": "module",
   "license": "MIT",
@@ -30,12 +30,18 @@
       "types": "./dist/src/runtime.d.ts",
       "import": "./dist/src/runtime.js"
     },
+    "./protocol": {
+      "types": "./dist/src/protocol.d.ts",
+      "import": "./dist/src/protocol.js"
+    },
     "./register": "./browser/themed-svg-element.js",
     "./schema": "./schema/themed-svg-manifest-v1.schema.json",
+    "./schema/stdio-v1": "./schema/themed-svg-stdio-v1.schema.json",
     "./package.json": "./package.json"
   },
   "bin": {
-    "themed-svg": "./bin/themed-svg.js"
+    "themed-svg": "./bin/themed-svg.js",
+    "themed-svg-stdio": "./bin/themed-svg-stdio.js"
   },
   "files": [
     "dist/src",
