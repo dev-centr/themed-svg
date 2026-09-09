@@ -1,0 +1,11 @@
+= Valid responsive dimensions
+:page-audience: themed-svg users and maintainers
+:page-usage-context: Understanding responsive SVG sizing behavior
+:page-orig-author: Cursor agent on behalf of Ryan Johnson
+:page-last-author: Cursor agent on behalf of Ryan Johnson
+:page-last-edited: 2026-09-09
+
+Generated SVGs now use `width="100%"`, retain their required `viewBox`, and
+omit the invalid `height="auto"` SVG presentation attribute. The browser
+runtime applies `height: auto` as CSS instead, preserving intrinsic aspect-ratio
+sizing without browser console errors.

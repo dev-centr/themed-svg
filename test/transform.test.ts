@@ -231,6 +231,14 @@ describe('structural transformation golden behavior', () => {
     assert.ok(nonNumeric.diagnostics.some(({ code }) => code === 'missing-viewbox'));
   });
 
+  it('uses valid responsive SVG dimensions', () => {
+    const result = transformSvg(svg, manifest);
+    assert.ok(result.svg);
+    assert.match(result.svg, /width="100%"/);
+    const rootTag = result.svg.match(/^<svg[^>]*>/)?.[0] ?? '';
+    assert.doesNotMatch(rootTag, /\sheight=/);
+  });
+
   it('discovers literals for diagnostics without rewriting', () => {
     const found = discoverLiteralColors(svg);
     assert.ok(found.some(({ value }) => value === '#eee'));

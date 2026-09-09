@@ -13,7 +13,7 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// node_modules/dompurify/dist/purify.es.mjs
+// node_modules/.pnpm/dompurify@3.4.15/node_modules/dompurify/dist/purify.es.mjs
 var purify_es_exports = {};
 __export(purify_es_exports, {
   default: () => purify
@@ -1456,7 +1456,7 @@ function createDOMPurify() {
 }
 var entries, setPrototypeOf, isFrozen, getPrototypeOf, getOwnPropertyDescriptor, freeze, seal, create, _ref, apply, construct, arrayForEach, arrayLastIndexOf, arrayPop, arrayPush, arraySplice, arrayIsArray, stringToLowerCase, stringToString, stringMatch, stringReplace, stringIndexOf, stringTrim, numberToString, booleanToString, bigintToString, symbolToString, objectHasOwnProperty, objectToString, regExpTest, typeErrorCreate, html$1, svg$1, svgFilters, svgDisallowed, mathMl$1, mathMlDisallowed, text, html, svg, mathMl, xml, MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR, DATA_ATTR, ARIA_ATTR, IS_ALLOWED_URI, IS_SCRIPT_OR_DATA, ATTR_WHITESPACE, DOCTYPE_NAME, CUSTOM_ELEMENT, ELEMENT_MARKUP_PROBE, COMMENT_MARKUP_PROBE, FALLBACK_TAG_CLOSE, SELF_CLOSING_TAG, NODE_TYPE, LITERAL_TEXT_ELEMENT_NAMES, LITERAL_TEXT_ELEMENTS, LITERAL_TEXT_CLOSE, getGlobal, _createTrustedTypesPolicy, _createHooksMap, _resolveSetOption, _resolveObjectOption, purify;
 var init_purify_es = __esm({
-  "node_modules/dompurify/dist/purify.es.mjs"() {
+  "node_modules/.pnpm/dompurify@3.4.15/node_modules/dompurify/dist/purify.es.mjs"() {
     entries = Object.entries;
     setPrototypeOf = Object.setPrototypeOf;
     isFrozen = Object.isFrozen;
@@ -2097,7 +2097,7 @@ function defineThemedSvgElement(options = {}) {
       super();
       const root = this.attachShadow({ mode: "open" });
       const style = this.ownerDocument.createElement("style");
-      style.textContent = ':host{display:inline-block;max-width:100%;vertical-align:middle}[part="mount"]{display:block}[part="mount"] span,[part="mount"] svg{display:block;max-width:100%}';
+      style.textContent = ':host{display:inline-block;max-width:100%;vertical-align:middle}[part="mount"]{display:block}[part="mount"] span,[part="mount"] svg{display:block;max-width:100%}[part="mount"] svg{height:auto}';
       this.fallbackSlot = this.ownerDocument.createElement("slot");
       this.mountTarget = this.ownerDocument.createElement("span");
       this.mountTarget.setAttribute("part", "mount");

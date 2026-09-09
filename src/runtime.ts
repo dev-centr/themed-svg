@@ -634,7 +634,7 @@ export function defineThemedSvgElement(
       super();
       const root = this.attachShadow({ mode: 'open' });
       const style = this.ownerDocument.createElement('style');
-      style.textContent = ':host{display:inline-block;max-width:100%;vertical-align:middle}[part="mount"]{display:block}[part="mount"] span,[part="mount"] svg{display:block;max-width:100%}';
+      style.textContent = ':host{display:inline-block;max-width:100%;vertical-align:middle}[part="mount"]{display:block}[part="mount"] span,[part="mount"] svg{display:block;max-width:100%}[part="mount"] svg{height:auto}';
       this.fallbackSlot = this.ownerDocument.createElement('slot');
       this.mountTarget = this.ownerDocument.createElement('span');
       this.mountTarget.setAttribute('part', 'mount');

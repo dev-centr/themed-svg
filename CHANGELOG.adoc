@@ -2,6 +2,15 @@
 
 This timeline records user-visible changes to `@dev-centr/themed-svg`.
 
+== 0.2.1 — 2026-09-09
+
+* Fixed responsive output to omit the invalid SVG `height="auto"` presentation
+  attribute while retaining intrinsic view-box sizing in the browser runtime.
+
+Details:
+link:changelog-details/2026-09-09-valid-responsive-dimensions.adoc[Valid
+responsive dimensions].
+
 == 0.2.0 — 2026-09-09
 
 * Added a versioned JSON and streaming JSONL stdio protocol for native editors.

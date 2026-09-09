@@ -553,7 +553,7 @@ function ensureGeometry(document: XmlDocument, diagnostics: Diagnostic[]): void 
     root.setAttribute('viewBox', `0 0 ${width} ${height}`);
   }
   root.setAttribute('width', '100%');
-  root.setAttribute('height', 'auto');
+  root.removeAttribute('height');
   if (!root.getAttribute('preserveAspectRatio')) {
     root.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   }
