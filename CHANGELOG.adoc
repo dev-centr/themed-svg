@@ -8,6 +8,9 @@ This timeline records user-visible changes to `@dev-centr/themed-svg`.
   matching inline `style` declarations (including Mermaid `!important`),
   and clear competing non-binding stylesheet color rules on the same
   elements.
+* Preserved sibling Mermaid classDef stylesheet selectors that share the
+  built-in inner `.label` wrapper, and recreate a binding property when an
+  earlier sync pass cleared it.
 
 Details:
 link:changelog-details/2026-09-10-stylesheet-inline-override.adoc[Stylesheet

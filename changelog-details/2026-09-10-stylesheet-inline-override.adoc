@@ -22,3 +22,10 @@ properties), the transformer now also:
    rules that match the same elements (for example high-specificity
    Mermaid `#id .class rect` rules), so those rules cannot override the
    binding after inline sync.
+
+Mermaid also nests a built-in `g.label` text wrapper inside every
+flowchart node. ClassDef rules such as `.identity tspan` and `.label
+tspan` therefore overlap even when they name different node kinds. Sync
+now preserves other stylesheet binding selectors from the same manifest
+instead of clearing sibling classDef rules, and recreates a binding
+property when an earlier pass removed it.

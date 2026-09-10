@@ -312,6 +312,73 @@ describe('structural transformation golden behavior', () => {
     );
   });
 
+  it('preserves sibling Mermaid classDef stylesheet bindings that share inner .label nodes', () => {
+    const mermaidSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80">
+  <style>
+    #my-svg .identity tspan{fill:#ffffff!important}
+    #my-svg .label rect{fill:#f4f7f8!important;stroke:#d4568c!important}
+    #my-svg .label tspan{fill:#142029!important}
+    #my-svg .relation rect{fill:#e9eef2!important;stroke:#0c6b6e!important}
+    #my-svg .node rect{fill:#ECECFF;stroke:#9370DB}
+  </style>
+  <g id="my-svg">
+    <g class="node identity">
+      <polygon points="0,0 10,0 10,10" style="fill:#0c6b6e !important;"/>
+      <g class="label"><tspan style="fill:#ffffff !important;">Id</tspan></g>
+    </g>
+    <g class="node label">
+      <rect width="20" height="10" style="fill:#f4f7f8 !important;stroke:#d4568c !important;"/>
+      <g class="label"><tspan style="fill:#142029 !important;">Lb</tspan></g>
+    </g>
+    <g class="node relation">
+      <rect width="20" height="10" style="fill:#e9eef2 !important;stroke:#0c6b6e !important;"/>
+      <g class="label"><tspan style="fill:#142029 !important;">Rel</tspan></g>
+    </g>
+  </g>
+</svg>`;
+    const mermaidManifest: ThemedSvgManifest = {
+      schemaVersion: 1,
+      namespace: 'diagram',
+      tokens: [
+        { id: 'color.identity.text' },
+        { id: 'color.label.surface' },
+        { id: 'color.label.border' },
+        { id: 'color.label.text' },
+        { id: 'color.relation.surface' },
+        { id: 'color.relation.border' },
+      ],
+      defaultPreset: 'light',
+      presets: {
+        light: {
+          'color.identity.text': '#ffffff',
+          'color.label.surface': '#f4f7f8',
+          'color.label.border': '#d4568c',
+          'color.label.text': '#142029',
+          'color.relation.surface': '#e9eef2',
+          'color.relation.border': '#0c6b6e',
+        },
+      },
+      bindings: [
+        { kind: 'stylesheet', selector: '#my-svg .identity tspan', property: 'fill', token: 'color.identity.text' },
+        { kind: 'stylesheet', selector: '#my-svg .label rect', property: 'fill', token: 'color.label.surface' },
+        { kind: 'stylesheet', selector: '#my-svg .label rect', property: 'stroke', token: 'color.label.border' },
+        { kind: 'stylesheet', selector: '#my-svg .label tspan', property: 'fill', token: 'color.label.text' },
+        { kind: 'stylesheet', selector: '#my-svg .relation rect', property: 'fill', token: 'color.relation.surface' },
+        { kind: 'stylesheet', selector: '#my-svg .relation rect', property: 'stroke', token: 'color.relation.border' },
+      ],
+      fallback: { unresolvedToken: 'error', missingTarget: 'error' },
+    };
+
+    const host = transformSvg(mermaidSvg, mermaidManifest, { mode: 'host' });
+    assert.equal(host.diagnostics.filter(({ severity }) => severity === 'error').length, 0);
+    assert.ok(host.svg);
+    assert.match(host.svg, /#my-svg \.label tspan\{fill:var\(--themed-svg-diagram-color-label-text, #142029\)/);
+    assert.match(host.svg, /#my-svg \.relation rect\{fill:var\(--themed-svg-diagram-color-relation-surface, #e9eef2\)/);
+    assert.match(host.svg, /style="fill:var\(--themed-svg-diagram-color-label-surface, #f4f7f8\) !important/);
+    // Generic Mermaid node rule still loses competing fill after classDef sync.
+    assert.doesNotMatch(host.svg, /#my-svg \.node rect\{[^}]*fill:/);
+  });
+
   it('discovers literals for diagnostics without rewriting', () => {
     const found = discoverLiteralColors(svg);
     assert.ok(found.some(({ value }) => value === '#eee'));

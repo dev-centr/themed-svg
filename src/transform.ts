@@ -423,10 +423,18 @@ function applyStylesheetBinding(
     root.walkRules((rule) => {
       if (!rule.selectors.some((selector) => selector.trim() === binding.selector.trim())) return;
       matched = true;
+      let found = false;
       rule.walkDecls(binding.property, (declaration) => {
         declaration.value = value;
         property = true;
+        found = true;
       });
+      // Mermaid classDef rules can share nodes with built-in `.label` wrappers.
+      // Earlier sync passes may clear a later binding's property; recreate it.
+      if (!found) {
+        rule.append({ prop: binding.property, value, important: true });
+        property = true;
+      }
     });
     while (styleElement.firstChild) styleElement.removeChild(styleElement.firstChild);
     styleElement.appendChild(document.createTextNode(root.toString()));
@@ -442,11 +450,17 @@ function applyStylesheetBinding(
  * 2. Clear competing non-binding stylesheet declarations that target the
  *    same elements/property so higher-specificity Mermaid rules cannot
  *    override the binding.
+ *
+ * Preserve other stylesheet binding selectors from the same manifest.
+ * Mermaid puts an inner `g.label` on every node, so classDef rules like
+ * `.identity tspan` and `.label tspan` overlap even when they name
+ * different node kinds — clearing sibling classDef rules breaks theming.
  */
 function syncStylesheetBindingOverrides(
   document: XmlDocument,
   binding: Extract<SvgBinding, { kind: 'stylesheet' }>,
-  value: string
+  value: string,
+  protectedSelectors: ReadonlySet<string>
 ): void {
   if (!isPresentationColorProperty(binding.property)) return;
   if (!supportedSelector(binding.selector)) return;
@@ -465,6 +479,7 @@ function syncStylesheetBindingOverrides(
     root.walkRules((rule) => {
       const selectors = rule.selectors.map((selector) => selector.trim());
       if (selectors.length === 1 && selectors[0] === bindingSelector) return;
+      if (selectors.some((selector) => protectedSelectors.has(selector))) return;
 
       const overlaps = selectors.some((selector) => {
         if (!supportedSelector(selector)) return false;
@@ -498,6 +513,11 @@ function applyBindings(
   diagnostics: Diagnostic[]
 ): void {
   const targets = new Map<string, number>();
+  const stylesheetSelectors = new Set(
+    manifest.bindings
+      .filter((binding) => binding.kind === 'stylesheet')
+      .map((binding) => binding.selector.trim())
+  );
   manifest.bindings.forEach((binding, bindingIndex) => {
     const value = replacement(outputMode, manifest, binding.token, palette);
     if (!value) {
@@ -550,7 +570,7 @@ function applyBindings(
           source: { kind: 'manifest', path: `/bindings/${bindingIndex}/selector` },
         });
       }
-      syncStylesheetBindingOverrides(document, binding, value);
+      syncStylesheetBindingOverrides(document, binding, value, stylesheetSelectors);
       return;
     }
 
