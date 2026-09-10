@@ -1,0 +1,24 @@
+= Stylesheet bindings beat Mermaid inline !important
+:page-audience: themed-svg users and maintainers
+:page-usage-context: Understanding how stylesheet bindings recolor Mermaid nodes
+:page-orig-author: Cursor agent on behalf of Ryan Johnson
+:page-last-author: Cursor agent on behalf of Ryan Johnson
+:page-last-edited: 2026-09-10
+
+Mermaid (and similar generators) often paint nodes with inline
+`style="fill:… !important; stroke:… !important"`. Inline `!important`
+beats any stylesheet rule, so host/adaptive CSS variables on binding
+selectors never recolored those nodes.
+
+When a stylesheet binding applies a presentation color property (`fill`,
+`stroke`, `color`, `stop-color`, `background-color`, and other `*-color`
+properties), the transformer now also:
+
+1. Rewrites that property on matched elements when it is already present
+   in the inline `style` attribute, using the same replacement value
+   (`var(--…, fallback)` for host/adaptive, concrete for fixed). Missing
+   inline properties are not invented.
+2. Clears competing declarations of the same property on other stylesheet
+   rules that match the same elements (for example high-specificity
+   Mermaid `#id .class rect` rules), so those rules cannot override the
+   binding after inline sync.

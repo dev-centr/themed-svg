@@ -239,6 +239,79 @@ describe('structural transformation golden behavior', () => {
     assert.doesNotMatch(rootTag, /\sheight=/);
   });
 
+  it('stylesheet bindings rewrite existing inline fill !important to theme vars', () => {
+    const mermaidSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50">
+  <style>
+    .secondary .label-container{fill:#e8f0ea!important;stroke:#1f3a2e!important}
+    #my-svg .secondary rect{fill:rgb(232,240,234)!important;stroke:#999999!important}
+  </style>
+  <g id="my-svg">
+    <g class="secondary">
+      <rect class="label-container" width="40" height="20" style="fill:#e8f0ea !important;stroke:#1f3a2e !important;"/>
+      <text class="label-container" style="font-weight:bold">Label</text>
+    </g>
+  </g>
+</svg>`;
+    const mermaidManifest: ThemedSvgManifest = {
+      schemaVersion: 1,
+      namespace: 'diagram',
+      tokens: [
+        { id: 'color.surface.secondary' },
+        { id: 'color.border.primary' },
+      ],
+      defaultPreset: 'light',
+      presets: {
+        light: {
+          'color.surface.secondary': '#e8f0ea',
+          'color.border.primary': '#1f3a2e',
+        },
+        dark: {
+          'color.surface.secondary': '#1a2e24',
+          'color.border.primary': '#a8c4b0',
+        },
+      },
+      bindings: [
+        {
+          kind: 'stylesheet',
+          selector: '.secondary .label-container',
+          property: 'fill',
+          token: 'color.surface.secondary',
+        },
+        {
+          kind: 'stylesheet',
+          selector: '.secondary .label-container',
+          property: 'stroke',
+          token: 'color.border.primary',
+        },
+      ],
+    };
+
+    const host = transformSvg(mermaidSvg, mermaidManifest, { mode: 'host' });
+    assert.equal(host.diagnostics.filter(({ severity }) => severity === 'error').length, 0);
+    assert.ok(host.svg);
+    assert.match(
+      host.svg,
+      /style="fill:var\(--themed-svg-diagram-color-surface-secondary, #e8f0ea\) !important; stroke:var\(--themed-svg-diagram-color-border-primary, #1f3a2e\) !important;"/
+    );
+    assert.doesNotMatch(host.svg, /style="[^"]*fill:#e8f0ea/);
+    assert.match(
+      host.svg,
+      /\.secondary \.label-container\{fill:var\(--themed-svg-diagram-color-surface-secondary, #e8f0ea\)!important;stroke:var\(--themed-svg-diagram-color-border-primary, #1f3a2e\)!important\}/
+    );
+    // Competing Mermaid rule that targeted the same rect loses fill/stroke declarations.
+    assert.doesNotMatch(host.svg, /#my-svg \.secondary rect\{[^}]*fill:/);
+    assert.doesNotMatch(host.svg, /#my-svg \.secondary rect\{[^}]*stroke:/);
+    // Text without inline fill/stroke must not gain invented inline color styles.
+    assert.match(host.svg, /style="font-weight:bold"/);
+
+    const fixed = transformSvg(mermaidSvg, mermaidManifest, { mode: 'fixed' });
+    assert.ok(fixed.svg);
+    assert.match(
+      fixed.svg,
+      /style="fill:#e8f0ea !important; stroke:#1f3a2e !important;"/
+    );
+  });
+
   it('discovers literals for diagnostics without rewriting', () => {
     const found = discoverLiteralColors(svg);
     assert.ok(found.some(({ value }) => value === '#eee'));

@@ -2,6 +2,17 @@
 
 This timeline records user-visible changes to `@dev-centr/themed-svg`.
 
+== 0.2.2 — 2026-09-10
+
+* Fixed stylesheet bindings so presentation color properties also rewrite
+  matching inline `style` declarations (including Mermaid `!important`),
+  and clear competing non-binding stylesheet color rules on the same
+  elements.
+
+Details:
+link:changelog-details/2026-09-10-stylesheet-inline-override.adoc[Stylesheet
+bindings beat Mermaid inline !important].
+
 == 0.2.1 — 2026-09-09
 
 * Fixed responsive output to omit the invalid SVG `height="auto"` presentation

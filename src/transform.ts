@@ -373,6 +373,27 @@ function replacement(
     : `var(${cssVariableName(manifest.namespace, token)}, ${fallback})`;
 }
 
+/** Color presentation properties where stylesheet bindings must also beat inline styles. */
+const PRESENTATION_COLOR_PROPERTIES = new Set([
+  'fill',
+  'stroke',
+  'color',
+  'stop-color',
+  'flood-color',
+  'lighting-color',
+  'background-color',
+  'border-color',
+  'outline-color',
+  'text-decoration-color',
+  'column-rule-color',
+  'caret-color',
+]);
+
+function isPresentationColorProperty(property: string): boolean {
+  const normalized = property.trim().toLowerCase();
+  return PRESENTATION_COLOR_PROPERTIES.has(normalized) || normalized.endsWith('-color');
+}
+
 function setStyleProperty(element: XmlElement, property: string, value: string): boolean {
   const root = postcss.parse(`x{${element.getAttribute('style') ?? ''}}`);
   const rule = root.first as Rule;
@@ -411,6 +432,56 @@ function applyStylesheetBinding(
     styleElement.appendChild(document.createTextNode(root.toString()));
   }
   return { matched, property };
+}
+
+/**
+ * Stylesheet bindings alone lose to Mermaid (and similar) inline
+ * `fill/stroke/…: … !important`. For presentation color properties:
+ * 1. Rewrite existing inline declarations on matched elements to the same
+ *    replacement value (do not invent new inline properties).
+ * 2. Clear competing non-binding stylesheet declarations that target the
+ *    same elements/property so higher-specificity Mermaid rules cannot
+ *    override the binding.
+ */
+function syncStylesheetBindingOverrides(
+  document: XmlDocument,
+  binding: Extract<SvgBinding, { kind: 'stylesheet' }>,
+  value: string
+): void {
+  if (!isPresentationColorProperty(binding.property)) return;
+  if (!supportedSelector(binding.selector)) return;
+
+  const matched = query(document.documentElement, binding.selector);
+  for (const element of matched) {
+    setStyleProperty(element, binding.property, value);
+  }
+  if (matched.length === 0) return;
+
+  const bindingSelector = binding.selector.trim();
+  const styleElements = query(document.documentElement, 'style');
+  for (const styleElement of styleElements) {
+    const root = postcss.parse(styleElement.textContent ?? '');
+    let changed = false;
+    root.walkRules((rule) => {
+      const selectors = rule.selectors.map((selector) => selector.trim());
+      if (selectors.length === 1 && selectors[0] === bindingSelector) return;
+
+      const overlaps = selectors.some((selector) => {
+        if (!supportedSelector(selector)) return false;
+        const ruleMatches = query(document.documentElement, selector);
+        return matched.some((element) => ruleMatches.includes(element));
+      });
+      if (!overlaps) return;
+
+      rule.walkDecls(binding.property, (declaration) => {
+        declaration.remove();
+        changed = true;
+      });
+    });
+    if (!changed) continue;
+    while (styleElement.firstChild) styleElement.removeChild(styleElement.firstChild);
+    styleElement.appendChild(document.createTextNode(root.toString()));
+  }
 }
 
 function bindingTarget(binding: SvgBinding): string {
@@ -479,6 +550,7 @@ function applyBindings(
           source: { kind: 'manifest', path: `/bindings/${bindingIndex}/selector` },
         });
       }
+      syncStylesheetBindingOverrides(document, binding, value);
       return;
     }
 
