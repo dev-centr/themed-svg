@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+  <style type="text/css">
+    .node { fill:var(--mermaid-primaryColor, #ECECFF); stroke:var(--mermaid-primaryBorderColor, #9370DB); }
+  </style>
+  <rect class="node" x="10" y="10" width="120" height="40" fill="var(--mermaid-primaryColor, #ECECFF)" stroke="var(--mermaid-primaryBorderColor, #9370DB)"/>
+  <text x="20" y="35" fill="var(--mermaid-primaryTextColor, #333333)">Hello</text>
+</svg>

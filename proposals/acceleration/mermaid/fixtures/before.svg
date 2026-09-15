@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" style="background:#ffffff">
+  <style type="text/css">
+    .node { fill:#ECECFF; stroke:#9370DB; }
+  </style>
+  <rect class="node" x="10" y="10" width="120" height="40" fill="#ECECFF" stroke="#9370DB"/>
+  <text x="20" y="35" fill="#333333">Hello</text>
+</svg>
