@@ -18,6 +18,8 @@
 !src/**
 !schema/
 !schema/**
+!proposals/
+!proposals/**
 !bin/
 !bin/**
 !test/

@@ -103,4 +103,7 @@ See the full [visitor README](README.adoc), the
 [owned-organization migration ledger](ORG-MIGRATION.adoc) records the initial
 diagram inventory, canonical source chains, exclusions, and verification gate.
 
+Upstream proposal (Mermaid + Kroki themed delivery):
+[proposals/2026-09-15-generator-kroki-themed-svg.md](proposals/2026-09-15-generator-kroki-themed-svg.md).
+
 Licensed under the [MIT License](LICENSE). Requires Node.js 20 or later.
