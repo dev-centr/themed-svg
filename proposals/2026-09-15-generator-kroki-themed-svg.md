@@ -1,6 +1,11 @@
 # RFC: Adaptive / host-themed SVG from diagram generators (Mermaid + Kroki)
 
 **Status:** Submitted upstream (2026-09-15)  
+**Upstream filings:**
+
+- Mermaid Ideas discussion: https://github.com/orgs/mermaid-js/discussions/8264
+- Kroki issue: https://github.com/yuzutech/kroki/issues/2146
+
 **Audience:** Mermaid and Kroki maintainers / implementers  
 **Reference contract:** [`@dev-centr/themed-svg`](https://github.com/dev-centr/themed-svg) (MIT)  
 **Adapters (polyfills until upstream lands):**
