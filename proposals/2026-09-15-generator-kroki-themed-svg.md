@@ -4,7 +4,10 @@
 **Upstream filings:**
 
 - Mermaid Ideas discussion: https://github.com/orgs/mermaid-js/discussions/8264
+- Mermaid implementation PR: https://github.com/mermaid-js/mermaid/pull/8008
 - Kroki issue: https://github.com/yuzutech/kroki/issues/2146
+- Kroki implementation PR: https://github.com/yuzutech/kroki/pull/2147
+- Acceleration package (emit/hook contracts + fixtures): [`proposals/acceleration/`](acceleration/)
 
 **Audience:** Mermaid and Kroki maintainers / implementers  
 **Reference contract:** [`@dev-centr/themed-svg`](https://github.com/dev-centr/themed-svg) (MIT)  

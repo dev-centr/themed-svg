@@ -105,5 +105,7 @@ diagram inventory, canonical source chains, exclusions, and verification gate.
 
 Upstream proposal (Mermaid + Kroki themed delivery):
 [proposals/2026-09-15-generator-kroki-themed-svg.md](proposals/2026-09-15-generator-kroki-themed-svg.md).
+Acceleration package (lift-able emit/hook contracts + fixtures):
+[proposals/acceleration/](proposals/acceleration/).
 
 Licensed under the [MIT License](LICENSE). Requires Node.js 20 or later.

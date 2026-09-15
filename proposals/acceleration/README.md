@@ -12,7 +12,7 @@ Goal: give maintainers something **lift-able** — not only prose.
 | Mermaid Ideas discussion | https://github.com/orgs/mermaid-js/discussions/8264 |
 | Mermaid implementation PR | https://github.com/mermaid-js/mermaid/pull/8008 |
 | Kroki proposal issue | https://github.com/yuzutech/kroki/issues/2146 |
-| Kroki implementation PR | _(filled after open)_ |
+| Kroki implementation PR | https://github.com/yuzutech/kroki/pull/2147 |
 
 ## What to lift
 
