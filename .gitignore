@@ -26,3 +26,8 @@
 !test/**
 !browser/
 !browser/**
+!/.github/
+!/.github/workflows/
+!/.github/workflows/encoding-guard.yml
+!/.editorconfig
+!/.gitattributes
